@@ -89,6 +89,7 @@ app.get('/api/me', requireAuth, (req, res) => res.json({ username: req.user.user
 // ---------- Boutique publique ----------
 app.get('/api/config', (_req, res) => res.json({
   shopName: env.SHOP_NAME || 'Éclat & Style', contactEmail: env.CONTACT_EMAIL || '', contactPhone: env.CONTACT_PHONE || '',
+  maxPayment: Number(env.PI_MAX_PAYMENT) || 0,
 }));
 
 app.get('/api/catalog', wrap(async (_req, res) => {
@@ -133,6 +134,8 @@ app.post('/api/orders', requireAuth, strict, wrap(async (req, res) => {
   });
   // prix, frais et total sont décidés ICI, jamais par le navigateur
   const totals = computeTotals(lines, zone.fee_pi);
+  const cap = Number(env.PI_MAX_PAYMENT);
+  if (cap > 0 && totals.total > cap) throw new HttpError(400, `Montant maximal autorisé pendant la phase de test : ${cap} Pi. Réduisez votre panier.`);
 
   const order = must(await db.from('orders').insert({
     number: orderNumber(), user_id: req.user.id, status: 'awaiting_payment',

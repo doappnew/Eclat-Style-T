@@ -17,7 +17,7 @@ const prod = (id) => S.cat.products.find((p) => p.id === id);
 function card(p, i) {
   const promo = unit(p) < Number(p.price_pi);
   return `<article class="card">
-    <button class="fav ${S.favs.has(p.id) ? 'on' : ''}" data-act="fav" data-id="${p.id}" aria-label="Favori">${S.favs.has(p.id) ? '♥' : '♡'}</button>
+    <button class="fav ${S.favs.has(p.id) ? 'on' : ''}" data-act="fav" data-id="${p.id}" aria-label="Favori"><svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20Z"/></svg></button>
     <a href="#/product/${p.id}"><div class="ph"><img loading="lazy" src="${img(p, i)}" alt="${esc(p.name)}">
       ${p.stock < 1 ? '<span class="tag">Épuisé</span>' : promo ? '<span class="tag promo">Promo</span>' : p.is_new ? '<span class="tag">Nouveau</span>' : ''}</div>
     <div class="body"><h3>${esc(p.name)}</h3><div class="price">${fmt(unit(p))}${promo ? `<span class="old">${fmt(p.price_pi)}</span>` : ''}</div></div></a>
@@ -38,13 +38,22 @@ async function home() {
     return `<section id="cat-${c.slug}"><div class="sec"><h2>${esc(c.name)}</h2><a href="#/catalog?cat=${c.slug}">Voir tout (${items.length})</a></div>
       <div class="grid">${items.slice(0, 4).map(card).join('')}</div></section>`;
   }).join('');
-  return `<img class="logo-home" src="/logo.png" alt="Éclat & Style — Révélez votre éclat, affirmez votre style"><section class="hero"><div class="eyebrow">Votre boutique beauté &amp; mode</div><h1>Révélez votre élégance.</h1>
-    <p>Beauté, bijoux, chaussures et accessoires pour toutes vos envies. Paiement en Pi, livraison à domicile.</p>
-    <a class="btn" href="#/catalog">Découvrir la boutique</a></section>
+  const ic = (d) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
+  const heroImg = products.find((p) => /soin-rituel/.test(p.images?.[0] || ''))?.images[0] || img(products[0] || {}, 0);
+  const hello = S.user ? `<span class="hello">Bonjour ${esc(S.user.username)}</span>` : '';
+  const cta = S.user
+    ? '<a class="btn gold" href="#/catalog">Découvrir la boutique</a>'
+    : `<button class="btn gold" data-act="login" type="button">Se connecter avec votre compte Pi</button><a class="btn light" href="#/catalog">Découvrir la boutique</a>`;
+  return `<section class="hero"><img src="${esc(heroImg)}" alt=""><div class="hero-in">${hello}<div class="eyebrow">Beauté · Bijoux · Mode</div>
+    <h1>Révélez votre <em>éclat</em>,<br>affirmez votre style.</h1>
+    <p>Une sélection élégante, payée en Pi et livrée chez vous.</p><div class="cta">${cta}</div></div></section>
+    <div class="trust">
+      <div>${ic('M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a1.5 1.5 0 1 0 0-.01M17 19a1.5 1.5 0 1 0 0-.01')}Livraison organisée par la boutique</div>
+      <div>${ic('M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Zm-3 9 2 2 4-4')}Paiement sécurisé en Pi</div>
+      <div>${ic('M12 3l2.6 5.4 5.9.9-4.3 4.1 1 5.9L12 16.5 6.8 19.3l1-5.9L3.5 9.3l5.9-.9L12 3Z')}Sélection de qualité</div></div>
     <form data-form="search"><input class="search" name="q" placeholder="Rechercher un produit…" aria-label="Rechercher"></form>
-    <div class="sec"><h2>Nos catégories</h2></div><div class="grid">${cats}</div>
-    <div class="sec" style="margin-top:34px"><h1 style="margin:0">Nos produits</h1></div>
-    <p class="muted">Classés par catégorie. Prix en Pi, paiement sécurisé dans le Pi Browser.</p>
+    <div class="sec"><h2>Nos catégories</h2></div><div class="rail">${cats}</div>
+    <div class="big-title"><h1>Nos produits</h1><div class="orn">✦</div><p>Classés par catégorie, prix en Pi</p></div>
     ${sections}`;
 }
 
@@ -103,6 +112,7 @@ function cart() {
     <button class="btn sm ghost" data-act="del" data-i="${i}">Retirer</button></div></div></div>`).join('')}
     <div class="panel" style="margin-top:14px"><div class="tot"><span>Sous-total</span><b>${fmt(cartSub())}</b></div>
     <div class="muted">Les frais de livraison sont calculés à l'étape suivante selon votre zone.</div></div>
+    ${S.config.maxPayment ? `<div class="testnote">Phase de test : montant maximal par commande ${S.config.maxPayment} Pi.</div>` : ''}
     <a class="btn gold block" href="#/checkout">Commander</a>`;
 }
 
@@ -131,6 +141,7 @@ function checkout() {
         <div class="tot"><span>Livraison</span><span>${fmt(fee)}</span></div>
         <div class="tot big"><span>Total à payer</span><span>${fmt(cartSub() + fee)}</span></div>
         <div class="muted">Le montant définitif est recalculé et confirmé par le serveur avant le paiement.</div></div>
+      ${S.config.maxPayment ? `<div class="testnote">Phase de test : montant maximal par commande ${S.config.maxPayment} Pi.</div>` : ''}
       <p class="muted">Paiement exclusivement en Pi, dans le Pi Browser.</p>
       <button class="btn gold block" id="pay-btn">${S.user ? 'Payer en Pi' : 'Se connecter et payer en Pi'}</button>
       <p id="pay-msg" class="err" role="alert"></p></form>`;
@@ -207,6 +218,8 @@ async function render() {
   if (t !== token) return;
   view.innerHTML = html;
   window.scrollTo(0, 0);
+  const hl = document.getElementById('hd-login');
+  if (hl) { hl.textContent = S.user ? S.user.username : 'Connexion Pi'; hl.classList.toggle('on', !!S.user); hl.dataset.act = S.user ? 'account' : 'login'; }
   document.querySelectorAll('.tabbar a').forEach((a) => {
     const key = a.dataset.tab; const on = (key === 'home' && path === '/') || (key !== 'home' && path.includes(key === 'account' ? 'account' : key));
     a.classList.toggle('on', on);
@@ -240,6 +253,7 @@ function quickAdd(id) {
 }
 
 Object.assign(acts, {
+  account: () => go('#/account'),
   login: async () => { try { await login(); await refreshFavs(); toast(`Bienvenue ${S.user.username}`); render(); } catch (e) { msg(e.message); } },
   logout: () => { logout(); render(); },
   thumb: (el) => { document.getElementById('main-img').src = el.src; document.querySelectorAll('.thumbs img').forEach((i) => i.classList.toggle('on', i === el)); },
@@ -287,6 +301,10 @@ document.addEventListener('click', (e) => { const el = e.target.closest('[data-a
 document.addEventListener('submit', (e) => { const f = e.target.closest('[data-form]'); if (f && forms[f.dataset.form]) { e.preventDefault(); forms[f.dataset.form](f); } });
 document.addEventListener('change', (e) => { const el = e.target.closest('[data-change]'); if (el && changes[el.dataset.change]) changes[el.dataset.change](el); });
 window.addEventListener('hashchange', render);
+
+// ---------- Page de bienvenue (disparaît seule après ~3 s) ----------
+const splash = document.getElementById('splash');
+if (splash) { setTimeout(() => { splash.classList.add('hide'); setTimeout(() => splash.remove(), 800); }, 3200); }
 
 // ---------- Démarrage ----------
 (async () => {

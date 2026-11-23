@@ -11,7 +11,7 @@ Stack : Express (Node 22) + Supabase (Postgres, RLS, stockage photos) + Pi SDK d
 - Photos : n'utilisez que des images dont vous avez les droits, sans logo de marque tierce ni contrefaçon (la liste de contrôle Mainnet de Pi vérifie les violations de marque).
 
 ## Mise en route
-1. **Supabase** : créez un projet, ouvrez SQL Editor, exécutez `supabase/001_schema.sql` (tables, sécurité, 33 produits de démonstration).
+1. **Supabase** : créez un projet, ouvrez SQL Editor, exécutez `supabase/001_schema.sql` (tables, sécurité, 54 produits de démonstration).
 2. **Hébergement** (ex. Render, Web Service Node) : `npm install` puis `npm start`. Variables : voir `.env.example`. `NODE_VERSION=22`. Activez Auto-Deploy.
 3. **Developer Portal Pi** : enregistrez l'app en *Self Hosted* avec l'URL publique de la boutique ; copiez la clé de validation dans `PI_VALIDATION_KEY` (servie sur `/validation-key.txt`) puis vérifiez le domaine ; créez la clé API (`PI_API_KEY`) **de cette même app** ; créez le portefeuille de l'app (testnet d'abord).
 4. Ouvrez la boutique **dans le Pi Browser** (le SDK n'existe pas ailleurs), connectez-vous.
@@ -31,3 +31,6 @@ Commande créée côté serveur (prix recalculés) → `Pi.createPayment` → `/
 Prix réels · juriste pour CGV/confidentialité (`public/pages.js` = modèles) · changer toute clé collée dans un chat · Mainnet : KYC, URL vérifiée, portefeuille distinct · remboursement : effectué manuellement depuis le portefeuille de l'app puis statut « Remboursée ».
 
 Tests : `npm test`.
+
+## Plafond de test
+`PI_MAX_PAYMENT=2` : le serveur refuse toute commande dont le total dépasse 2 Pi (retirer cette variable pour la production).

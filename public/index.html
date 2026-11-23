@@ -6,17 +6,34 @@
   <meta name="theme-color" content="#fcf9f4">
   <link rel="icon" type="image/png" href="/favicon.png">
   <title>Éclat &amp; Style — Beauté, bijoux et mode</title>
+  <link rel="preload" href="/fonts/cormorant-garamond-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 </head>
 <body>
+  <div id="splash" class="splash" role="presentation" aria-hidden="true">
+    <div class="splash-inner">
+      <img src="/logo.png" alt="" width="300" height="300">
+      <p class="splash-hello">Bienvenue chez Éclat &amp; Style</p>
+      <p id="splash-sub" class="splash-sub">Révélez votre éclat, affirmez votre style</p>
+      <div class="splash-bar"><i></i></div>
+    </div>
+  </div>
+
   <header class="top">
-    <a class="brand" href="#/"><img src="/logo-mark.png" alt="" height="40"><span>Éclat &amp; Style</span></a>
-    <a class="icon-btn" href="#/cart" aria-label="Panier">Panier <b id="cart-count" hidden>0</b></a>
+    <a class="brand" href="#/"><img src="/logo-mark.png" alt="" height="38"><span>Éclat <em>&amp;</em> Style</span></a>
+    <div class="top-right">
+      <button class="pill" id="hd-login" data-act="login" type="button">Connexion Pi</button>
+      <a class="icon-btn" href="#/cart" aria-label="Panier">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+        <b id="cart-count" hidden>0</b>
+      </a>
+    </div>
   </header>
   <div id="notice" class="notice" hidden></div>
   <main id="view"></main>
   <footer class="foot">
+    <img src="/logo-mark.png" alt="" height="54">
     <nav>
       <a href="#/page/livraison">Livraison</a><a href="#/page/retours">Retours</a><a href="#/page/faq">FAQ</a>
       <a href="#/page/cgv">Conditions de vente</a><a href="#/page/confidentialite">Confidentialité</a><a href="#/page/contact">Contact</a>
@@ -24,11 +41,11 @@
     <p>Paiement en Pi, compatible Pi Network. Application indépendante, non affiliée à Pi Network ni approuvée par lui.</p>
   </footer>
   <nav class="tabbar">
-    <a href="#/" data-tab="home">Accueil</a>
-    <a href="#/catalog" data-tab="catalog">Catégories</a>
-    <a href="#/cart" data-tab="cart">Panier</a>
-    <a href="#/favorites" data-tab="favorites">Favoris</a>
-    <a href="#/account" data-tab="account">Compte</a>
+    <a href="#/" data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8.5a1 1 0 0 1-1 1h-4.5V15h-5v5.5H5a1 1 0 0 1-1-1V11Z"/></svg><span>Accueil</span></a>
+    <a href="#/catalog" data-tab="catalog"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.4"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.4"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.4"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.4"/></svg><span>Catégories</span></a>
+    <a href="#/cart" data-tab="cart"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span>Panier</span></a>
+    <a href="#/favorites" data-tab="favorites"><svg viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.4a4.3 4.3 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20Z"/></svg><span>Favoris</span></a>
+    <a href="#/account" data-tab="account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20c.6-3.6 3.5-5.6 7.2-5.6s6.6 2 7.2 5.6"/></svg><span>Compte</span></a>
   </nav>
   <div id="toast" class="toast" hidden></div>
   <script src="/app.js" type="module"></script>
