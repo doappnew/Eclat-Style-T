@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b1713">
+  <title>Éclat &amp; Style — Beauté, bijoux et mode</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="#/"><span class="mono">É</span><span>Éclat &amp; Style</span></a>
+    <a class="icon-btn" href="#/cart" aria-label="Panier">Panier <b id="cart-count" hidden>0</b></a>
+  </header>
+  <div id="notice" class="notice" hidden></div>
+  <main id="view"></main>
+  <footer class="foot">
+    <nav>
+      <a href="#/page/livraison">Livraison</a><a href="#/page/retours">Retours</a><a href="#/page/faq">FAQ</a>
+      <a href="#/page/cgv">Conditions de vente</a><a href="#/page/confidentialite">Confidentialité</a><a href="#/page/contact">Contact</a>
+    </nav>
+    <p>Paiement en Pi, compatible Pi Network. Application indépendante, non affiliée à Pi Network ni approuvée par lui.</p>
+  </footer>
+  <nav class="tabbar">
+    <a href="#/" data-tab="home">Accueil</a>
+    <a href="#/catalog" data-tab="catalog">Catégories</a>
+    <a href="#/cart" data-tab="cart">Panier</a>
+    <a href="#/favorites" data-tab="favorites">Favoris</a>
+    <a href="#/account" data-tab="account">Compte</a>
+  </nav>
+  <div id="toast" class="toast" hidden></div>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
