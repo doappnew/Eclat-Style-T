@@ -51,3 +51,10 @@ export function pay(order) {
     );
   });
 }
+
+// Envoi de test (Testnet) : l'autorisation « wallet_address » est demandée seulement au clic sur ce bouton.
+export async function requestTestnetPayout() {
+  init();
+  await window.Pi.authenticate(['username', 'payments', 'wallet_address'], onIncomplete);
+  return api('/api/testnet-payout', { method: 'POST', body: {} });
+}

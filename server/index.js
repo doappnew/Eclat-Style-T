@@ -90,6 +90,7 @@ app.get('/api/me', requireAuth, (req, res) => res.json({ username: req.user.user
 app.get('/api/config', (_req, res) => res.json({
   shopName: env.SHOP_NAME || 'Éclat & Style', contactEmail: env.CONTACT_EMAIL || '', contactPhone: env.CONTACT_PHONE || '',
   maxPayment: Number(env.PI_MAX_PAYMENT) || 0,
+  testnetPayout: env.TESTNET_PAYOUT === '1' && !!env.PI_WALLET_SEED,
 }));
 
 app.get('/api/catalog', wrap(async (_req, res) => {
@@ -227,6 +228,40 @@ app.post('/api/payments/cancelled', requireAuth, wrap(async (req, res) => {
   const paymentId = String(req.body?.paymentId || '');
   await db.from('orders').update({ payment_id: null }).eq('payment_id', paymentId).eq('user_id', req.user.id).eq('status', 'awaiting_payment');
   res.json({ ok: true });
+}));
+
+// ---------- Envoi de test (Testnet) : de l'application vers l'utilisateur (A2U) ----------
+// Fermé par défaut : actif seulement si TESTNET_PAYOUT=1 et PI_WALLET_SEED défini (variables Render, jamais dans le code).
+// Montant fixé par le serveur, un seul envoi par compte, plafond de comptes, réseau « Pi Testnet » vérifié.
+const PAYOUT_AMOUNT = Math.min(Number(env.TESTNET_PAYOUT_AMOUNT) || 0.1, 1);
+const PAYOUT_MAX = Math.min(Number(env.TESTNET_PAYOUT_MAX) || 20, 20);
+app.post('/api/testnet-payout', strict, requireAuth, wrap(async (req, res) => {
+  if (env.TESTNET_PAYOUT !== '1' || !env.PI_WALLET_SEED || !env.PI_API_KEY) throw new HttpError(404, 'Indisponible');
+  const uid = req.user.id;
+  const existing = (await db.from('testnet_payouts').select('status').eq('user_id', uid).maybeSingle()).data;
+  if (existing && existing.status !== 'failed') throw new HttpError(409, 'Un envoi de test a déjà été effectué pour ce compte.');
+  const { count } = await db.from('testnet_payouts').select('user_id', { count: 'exact', head: true }).neq('status', 'failed');
+  if ((count || 0) >= PAYOUT_MAX) throw new HttpError(403, 'Le nombre maximal d\'envois de test est atteint.');
+  must(await db.from('testnet_payouts').upsert({ user_id: uid, amount: PAYOUT_AMOUNT, status: 'pending', payment_id: null, txid: null }, { onConflict: 'user_id' }));
+  let paymentId = null;
+  try {
+    const { default: PiNetwork } = await import('pi-backend');
+    const sdk = new PiNetwork(env.PI_API_KEY, env.PI_WALLET_SEED);
+    paymentId = await sdk.createPayment({ amount: PAYOUT_AMOUNT, memo: 'Envoi de test', metadata: { kind: 'testnet-payout', userId: uid }, uid: req.user.pi_uid });
+    await db.from('testnet_payouts').update({ payment_id: paymentId }).eq('user_id', uid);
+    const created = await sdk.getPayment(paymentId);
+    if (created.network !== 'Pi Testnet') { await sdk.cancelPayment(paymentId); throw new Error('network_not_testnet'); }
+    const txid = await sdk.submitPayment(paymentId);
+    await db.from('testnet_payouts').update({ txid }).eq('user_id', uid);
+    await sdk.completePayment(paymentId, txid);
+    await db.from('testnet_payouts').update({ status: 'completed' }).eq('user_id', uid);
+    console.log(`payout: terminé ${paymentId}`);
+    res.json({ ok: true, amount: PAYOUT_AMOUNT });
+  } catch (e) {
+    console.error(`payout: échec ${paymentId || '-'} ${e?.response?.status || ''} ${e?.response?.data?.error || e?.message || 'erreur'}`.slice(0, 300));
+    await db.from('testnet_payouts').update({ status: 'failed' }).eq('user_id', uid);
+    throw new HttpError(502, 'L\'envoi de test a échoué. Réessayez dans un instant.');
+  }
 }));
 
 // ---------- Administration ----------

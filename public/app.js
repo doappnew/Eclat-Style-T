@@ -1,5 +1,5 @@
 import { S, acts, forms, changes, store, esc, fmt, unit, placeholder, api, toast, go, saveSession, logout, saveCart } from './core.js';
-import { hasPi, login, pay } from './pi.js';
+import { hasPi, login, pay, requestTestnetPayout } from './pi.js';
 import { PAGES } from './pages.js';
 
 const view = document.getElementById('view');
@@ -189,7 +189,7 @@ function needLogin(msg) {
 function account() {
   if (!S.user) return needLogin('Connectez-vous avec votre compte Pi pour commander et suivre vos achats.');
   return `<h1>Mon compte</h1><div class="panel"><b>${esc(S.user.username)}</b></div>
-    <div class="panel"><a href="#/orders">Mes commandes</a><br><br><a href="#/favorites">Mes favoris</a>${S.user.role === 'admin' ? '<br><br><a href="#/admin"><b>Espace administration</b></a>' : ''}</div>
+    <div class="panel"><a href="#/orders">Mes commandes</a><br><br><a href="#/favorites">Mes favoris</a>${S.config.testnetPayout ? '<br><br><button class="btn ghost block" data-act="payout" type="button">Recevoir mon envoi de test (Testnet)</button>' : ''}${S.user.role === 'admin' ? '<br><br><a href="#/admin"><b>Espace administration</b></a>' : ''}</div>
     <button class="btn ghost block" data-act="logout">Se déconnecter</button>`;
 }
 
@@ -257,6 +257,7 @@ function quickAdd(id) {
 
 Object.assign(acts, {
   account: () => go('#/account'),
+  payout: async (el) => { el.disabled = true; try { const r = await requestTestnetPayout(); toast(`Envoi de test reçu : ${r.amount} Pi (Testnet)`); } catch (e) { toast(e.message || 'Envoi impossible'); } el.disabled = false; },
   login: async () => { try { await login(); await refreshFavs(); toast(`Bienvenue ${S.user.username}`); render(); } catch (e) { msg(e.message); } },
   logout: () => { logout(); render(); },
   thumb: (el) => { document.getElementById('main-img').src = el.src; document.querySelectorAll('.thumbs img').forEach((i) => i.classList.toggle('on', i === el)); },
