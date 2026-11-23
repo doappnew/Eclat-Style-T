@@ -293,11 +293,16 @@ window.addEventListener('hashchange', render);
   S.cart = store.get('cart') || []; saveCart();
   const ses = store.get('session');
   if (ses?.token) { S.token = ses.token; S.user = ses.user; }
+  // Si le serveur dormait, le premier appel peut durer ~50 s : on prévient et on réessaie.
+  view.innerHTML = '<div class="spin">Chargement…</div>';
+  const wake = setTimeout(() => { view.innerHTML = '<div class="spin">La boutique se réveille, quelques secondes…</div>'; }, 4000);
+  const retry = async (fn) => { for (let i = 0; ; i++) { try { return await fn(); } catch (e) { if (i >= 3) throw e; await new Promise((r) => setTimeout(r, 4000)); } } };
   try {
-    const [cfg, cat] = await Promise.all([api('/api/config'), api('/api/catalog')]);
+    const [cfg, cat] = await retry(() => Promise.all([api('/api/config'), api('/api/catalog')]));
+    clearTimeout(wake);
     S.config = cfg; S.cat = cat;
     if (S.user) { try { const me = await api('/api/me'); S.user = me; store.set('session', { token: S.token, user: me }); await refreshFavs(); } catch { /* session expirée */ } }
-  } catch (e) { view.innerHTML = `<p class="err">${esc(e.message)}</p>`; return; }
+  } catch (e) { clearTimeout(wake); view.innerHTML = `<p class="err">${esc(e.message)}</p>`; return; }
   if (!hasPi()) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = 'Pour vous connecter et payer en Pi, ouvrez cette boutique dans le Pi Browser. Vous pouvez parcourir le catalogue ici.'; }
   render();
 })();

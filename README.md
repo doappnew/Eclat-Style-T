@@ -21,6 +21,12 @@ Stack : Express (Node 22) + Supabase (Postgres, RLS, stockage photos) + Pi SDK d
 ## Paiement : flux
 Commande créée côté serveur (prix recalculés) → `Pi.createPayment` → `/approve` (contrôle utilisateur, commande, montant) → signature dans le portefeuille → `/complete` → `finalize_paid_order` (atomique, idempotent, décrémente le stock). La commande n'est « payée » qu'à ce moment.
 
+## Service d'éveil (offres gratuites)
+- Le serveur s'appelle lui-même toutes les 10 min (`/healthz`) pour que Render ne l'endorme pas, et lit la base toutes les 6 h pour que Supabase ne se mette pas en pause. Voir `server/index.js`.
+- Un site déjà endormi ne peut pas se réveiller seul : ajoutez un moniteur externe gratuit (UptimeRobot ou cron-job.org) qui appelle `https://VOTRE-SITE.onrender.com/healthz` toutes les 5 minutes.
+- Le site affiche « La boutique se réveille… » et réessaie si le serveur met du temps à répondre.
+- Désactivation : `KEEPALIVE=off`.
+
 ## Avant la production
 Prix réels · juriste pour CGV/confidentialité (`public/pages.js` = modèles) · changer toute clé collée dans un chat · Mainnet : KYC, URL vérifiée, portefeuille distinct · remboursement : effectué manuellement depuis le portefeuille de l'app puis statut « Remboursée ».
 

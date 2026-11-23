@@ -45,6 +45,9 @@ app.use(express.json({ limit: '6mb' }));
 app.use('/api', rateLimit({ windowMs: 15 * 60 * 1000, limit: 600, standardHeaders: true, legacyHeaders: false }));
 const strict = rateLimit({ windowMs: 15 * 60 * 1000, limit: 80, standardHeaders: true, legacyHeaders: false });
 
+// Point de contrôle léger (sert au service d'éveil et aux moniteurs externes)
+app.get('/healthz', (_req, res) => res.set('Cache-Control', 'no-store').json({ ok: true }));
+
 // Vérification du domaine dans le Developer Portal
 app.get('/validation-key.txt', (_req, res) => res.type('text/plain').send(env.PI_VALIDATION_KEY || ''));
 
@@ -297,3 +300,24 @@ app.use((err, _req, res, _next) => {
 
 const port = Number(env.PORT) || 3000;
 app.listen(port, () => console.log(`Boutique démarrée sur le port ${port}`));
+
+// ---------- Service d'éveil ----------
+// 1) Render (offre gratuite) endort le site après ~15 min sans visite : le serveur s'appelle lui-même
+//    par son adresse publique toutes les 10 min tant qu'il est réveillé.
+// 2) Supabase (offre gratuite) met le projet en pause après une semaine d'inactivité : une lecture
+//    légère de la base toutes les 6 h l'en empêche.
+// Limite : un site déjà endormi ne peut pas se réveiller seul. Ajoutez un moniteur externe sur /healthz
+// (voir README). Désactivation : KEEPALIVE=off.
+if (env.KEEPALIVE !== 'off') {
+  const selfUrl = (env.KEEPALIVE_URL || env.RENDER_EXTERNAL_URL || '').replace(/\/$/, '');
+  if (selfUrl) {
+    setInterval(() => {
+      fetch(`${selfUrl}/healthz`, { signal: AbortSignal.timeout(15000) })
+        .catch((e) => console.error('keepalive: appel du site échoué', e.message));
+    }, 10 * 60 * 1000).unref();
+  }
+  const pingDb = () => db.from('categories').select('id').limit(1)
+    .then(({ error }) => { if (error) console.error('keepalive: lecture base échouée', error.message); }, (e) => console.error('keepalive: base injoignable', e.message));
+  setTimeout(pingDb, 30 * 1000).unref();
+  setInterval(pingDb, 6 * 60 * 60 * 1000).unref();
+}
