@@ -308,6 +308,18 @@ window.addEventListener('hashchange', render);
 // ---------- Plein écran (au premier toucher, si le navigateur le permet) ----------
 document.addEventListener('click', () => { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).catch(() => {}); }, { once: true });
 
+// ---------- Barres masquées au défilement vers le bas, réaffichées vers le haut ----------
+(() => {
+  const bar = document.querySelector('.tabbar'); const top = document.querySelector('.top'); let last = window.scrollY;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY; const d = y - last;
+    if (Math.abs(d) < 8) return;
+    const hide = d > 0 && y > 80;
+    bar.classList.toggle('hide', hide); top.classList.toggle('hide', hide); last = y;
+  }, { passive: true });
+  window.addEventListener('hashchange', () => { bar.classList.remove('hide'); top.classList.remove('hide'); });
+})();
+
 // ---------- Page de bienvenue (disparaît seule après ~3 s) ----------
 const splash = document.getElementById('splash');
 if (splash) { setTimeout(() => { splash.classList.add('hide'); setTimeout(() => splash.remove(), 800); }, 3200); }

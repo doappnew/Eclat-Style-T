@@ -135,10 +135,10 @@ main>a.muted:first-child{display:inline-block}
 .foot{margin-top:40px;padding:30px 20px 24px;text-align:center;background:linear-gradient(180deg,#10224a,#0b1730);color:#cfc4b2;font-size:.8rem}
 .foot img{margin:0 auto 12px;height:54px;width:auto;filter:brightness(1.08)}
 .foot nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;margin-bottom:12px} .foot a{color:var(--gold-l)} .foot p{margin:0;max-width:46ch;margin-inline:auto}
-.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:40;display:flex;background:rgba(11,23,48,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid #8d6b25;padding-bottom:env(safe-area-inset-bottom)}
-.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 8px;font-size:.68rem;letter-spacing:.04em;color:#a89b86}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:40;display:flex;background:rgba(237,240,245,.97);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);transition:transform .3s ease}
+.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 8px;font-size:.68rem;letter-spacing:.04em;color:#66708a}
 .tabbar svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.tabbar a.on{color:var(--gold-l)} .tabbar a.on svg{stroke:var(--gold-l)}
+.tabbar a.on{color:var(--gold-d)} .tabbar a.on svg{stroke:var(--gold-d)}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:var(--gold-l);padding:12px 20px;border-radius:999px;z-index:60;max-width:90%;font-size:.9rem;box-shadow:var(--shadow)}
 .spin{text-align:center;padding:60px 20px;color:#66708a;font:italic 500 1.2rem var(--serif)}
 section[id^=cat-]{scroll-margin-top:70px}
@@ -164,3 +164,5 @@ section[id^=cat-]{scroll-margin-top:70px}
 .big-title h1{background:var(--goldgrad);-webkit-background-clip:text;background-clip:text;color:transparent}
 section[id^=cat-] .sec h2{font-size:1.9rem}
 .card .price{font-size:1.4rem}
+
+.tabbar.hide{transform:translateY(105%)} .top{transition:transform .3s ease} .top.hide{transform:translateY(-105%)}
