@@ -291,7 +291,10 @@ admin.get('/stats', wrap(async (_req, res) => {
 app.use('/api/admin', admin);
 
 // ---------- Front ----------
-app.use(express.static(path.join(here, '..', 'public'), { maxAge: '1h', index: 'index.html' }));
+app.use(express.static(path.join(here, '..', 'public'), {
+  index: 'index.html',
+  setHeaders: (res, file) => { res.setHeader('Cache-Control', /\.(html|js|css)$/.test(file) ? 'no-cache' : 'public, max-age=604800'); },
+}));
 app.use('/api', (_req, _res, next) => next(new HttpError(404, 'Route inconnue')));
 
 app.use((err, _req, res, _next) => {
