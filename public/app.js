@@ -29,8 +29,8 @@ function card(p, i) {
 async function home() {
   const { categories, products } = S.cat;
   const cats = categories.map((c, i) => {
-    const p = products.find((x) => x.category_id === c.id);
-    return `<a class="cat" href="#/catalog?cat=${c.slug}"><div class="ph"><img loading="lazy" src="${img(p || {}, i)}" alt=""></div>${esc(c.name)}</a>`;
+    const items = products.filter((x) => x.category_id === c.id); const p = items[0];
+    return `<a class="tile" href="#/catalog?cat=${c.slug}"><img loading="lazy" src="${img(p || {}, i)}" alt=""><span>${esc(c.name)}<small>${items.length} produit${items.length > 1 ? 's' : ''}</small></span></a>`;
   }).join('');
   const sections = categories.map((c) => {
     const items = products.filter((p) => p.category_id === c.id);
@@ -38,6 +38,7 @@ async function home() {
     return `<section id="cat-${c.slug}"><div class="sec"><h2>${esc(c.name)}</h2><a href="#/catalog?cat=${c.slug}">Voir tout (${items.length})</a></div>
       <div class="grid">${items.slice(0, 4).map(card).join('')}</div></section>`;
   }).join('');
+  const news = products.filter((p) => p.is_new && p.stock > 0).slice(0, 10);
   const ic = (d) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
   const heroImg = products.find((p) => /soin-rituel/.test(p.images?.[0] || ''))?.images[0] || img(products[0] || {}, 0);
   const hello = S.user ? `<span class="hello">Bonjour ${esc(S.user.username)}</span>` : '';
@@ -52,7 +53,9 @@ async function home() {
       <div>${ic('M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Zm-3 9 2 2 4-4')}Paiement sécurisé en Pi</div>
       <div>${ic('M12 3l2.6 5.4 5.9.9-4.3 4.1 1 5.9L12 16.5 6.8 19.3l1-5.9L3.5 9.3l5.9-.9L12 3Z')}Sélection de qualité</div></div>
     <form data-form="search"><input class="search" name="q" placeholder="Rechercher un produit…" aria-label="Rechercher"></form>
-    <div class="sec"><h2>Nos catégories</h2></div><div class="rail">${cats}</div>
+    ${S.user ? '' : `<div class="loginband"><h3>Pionniers, bienvenue</h3><p>Connectez-vous en un geste avec votre compte Pi pour commander, payer en Pi et suivre vos livraisons.</p><button class="btn gold" data-act="login" type="button">Se connecter avec Pi</button></div>`}
+    <div class="sec"><h2>Nos catégories</h2></div><div class="tiles">${cats}</div>
+    ${news.length ? `<div class="band"><div class="sec"><h2>Nouveautés</h2><a href="#/catalog?sort=new">Tout voir</a></div><div class="hrail">${news.map(card).join('')}</div></div>` : ''}
     <div class="big-title"><h1>Nos produits</h1><div class="orn">✦</div><p>Classés par catégorie, prix en Pi</p></div>
     ${sections}`;
 }
