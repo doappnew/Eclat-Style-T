@@ -53,7 +53,7 @@ async function home() {
       <div>${ic('M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Zm-3 9 2 2 4-4')}Paiement sécurisé en Pi</div>
       <div>${ic('M12 3l2.6 5.4 5.9.9-4.3 4.1 1 5.9L12 16.5 6.8 19.3l1-5.9L3.5 9.3l5.9-.9L12 3Z')}Sélection de qualité</div></div>
     <form data-form="search"><input class="search" name="q" placeholder="Rechercher un produit…" aria-label="Rechercher"></form>
-    ${S.user ? '' : `<div class="loginband"><h3>Pionniers, bienvenue</h3><p>Connectez-vous en un geste avec votre compte Pi pour commander, payer en Pi et suivre vos livraisons.</p><button class="btn gold" data-act="login" type="button">Se connecter avec Pi</button></div>`}
+    ${S.user ? '' : `<div class="loginband"><h3>Pionniers, bienvenue</h3><p>Connectez-vous en un geste avec votre compte Pi pour commander, payer en Pi et suivre vos livraisons.</p><button class="btn gold" data-act="login" type="button">Se connecter avec Pi</button><p style="margin:12px 0 0;font-size:.78rem;color:#b9c3d8">En vous connectant, vous acceptez nos <a href="#/page/conditions" style="color:#e9d29a"><u>conditions d'utilisation</u></a> et notre <a href="#/page/confidentialite" style="color:#e9d29a"><u>politique de confidentialité</u></a>.</p></div>`}
     <div class="sec"><h2>Nos catégories</h2></div><div class="tiles">${cats}</div>
     ${news.length ? `<div class="band"><div class="sec"><h2>Nouveautés</h2><a href="#/catalog?sort=new">Tout voir</a></div><div class="hrail">${news.map(card).join('')}</div></div>` : ''}
     <div class="big-title"><h1>Nos produits</h1><div class="orn">✦</div><p>Classés par catégorie, prix en Pi</p></div>
@@ -145,7 +145,7 @@ function checkout() {
         <div class="tot big"><span>Total à payer</span><span>${fmt(cartSub() + fee)}</span></div>
         <div class="muted">Le montant définitif est recalculé et confirmé par le serveur avant le paiement.</div></div>
       ${S.config.maxPayment ? `<div class="testnote">Phase de test : montant maximal par commande ${S.config.maxPayment} Pi.</div>` : ''}
-      <p class="muted">Paiement exclusivement en Pi, dans le Pi Browser.</p>
+      <p class="muted">Paiement exclusivement en Pi, dans le Pi Browser.</p><p class="muted" style="margin-top:10px">En continuant, vous acceptez les <a href="#/page/conditions"><u>conditions d'utilisation</u></a> et la <a href="#/page/confidentialite"><u>politique de confidentialité</u></a>.</p>
       <button class="btn gold block" id="pay-btn">${S.user ? 'Payer en Pi' : 'Se connecter et payer en Pi'}</button>
       <p id="pay-msg" class="err" role="alert"></p></form>`;
 }

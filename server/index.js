@@ -49,6 +49,10 @@ const strict = rateLimit({ windowMs: 15 * 60 * 1000, limit: 80, standardHeaders:
 app.get('/healthz', (_req, res) => res.set('Cache-Control', 'no-store').json({ ok: true }));
 
 // Vérification du domaine dans le Developer Portal
+// Adresses simples pour le Portail développeur Pi
+app.get('/confidentialite', (_req, res) => res.redirect(302, '/#/page/confidentialite'));
+app.get('/privacy', (_req, res) => res.redirect(302, '/#/page/confidentialite'));
+app.get(['/conditions', '/terms'], (_req, res) => res.redirect(302, '/#/page/conditions'));
 app.get('/validation-key.txt', (_req, res) => res.type('text/plain').send(env.PI_VALIDATION_KEY || ''));
 
 // ---------- Authentification ----------
