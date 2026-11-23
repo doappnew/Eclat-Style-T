@@ -40,7 +40,7 @@ async function home() {
   }).join('');
   const news = products.filter((p) => p.is_new && p.stock > 0).slice(0, 10);
   const ic = (d) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
-  const heroImg = products.find((p) => /soin-rituel/.test(p.images?.[0] || ''))?.images[0] || img(products[0] || {}, 0);
+  const heroImg = '/img/hero.jpg';
   const hello = S.user ? `<span class="hello">Bonjour ${esc(S.user.username)}</span>` : '';
   const cta = S.user
     ? '<a class="btn gold" href="#/catalog">Découvrir la boutique</a>'
@@ -304,6 +304,9 @@ document.addEventListener('click', (e) => { const el = e.target.closest('[data-a
 document.addEventListener('submit', (e) => { const f = e.target.closest('[data-form]'); if (f && forms[f.dataset.form]) { e.preventDefault(); forms[f.dataset.form](f); } });
 document.addEventListener('change', (e) => { const el = e.target.closest('[data-change]'); if (el && changes[el.dataset.change]) changes[el.dataset.change](el); });
 window.addEventListener('hashchange', render);
+
+// ---------- Plein écran (au premier toucher, si le navigateur le permet) ----------
+document.addEventListener('click', () => { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).catch(() => {}); }, { once: true });
 
 // ---------- Page de bienvenue (disparaît seule après ~3 s) ----------
 const splash = document.getElementById('splash');
