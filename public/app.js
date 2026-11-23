@@ -38,7 +38,7 @@ async function home() {
     return `<section id="cat-${c.slug}"><div class="sec"><h2>${esc(c.name)}</h2><a href="#/catalog?cat=${c.slug}">Voir tout (${items.length})</a></div>
       <div class="grid">${items.slice(0, 4).map(card).join('')}</div></section>`;
   }).join('');
-  return `<section class="hero"><div class="eyebrow">Votre boutique beauté &amp; mode</div><h1>Révélez votre élégance.</h1>
+  return `<img class="logo-home" src="/logo.png" alt="Éclat & Style — Révélez votre éclat, affirmez votre style"><section class="hero"><div class="eyebrow">Votre boutique beauté &amp; mode</div><h1>Révélez votre élégance.</h1>
     <p>Beauté, bijoux, chaussures et accessoires pour toutes vos envies. Paiement en Pi, livraison à domicile.</p>
     <a class="btn" href="#/catalog">Découvrir la boutique</a></section>
     <form data-form="search"><input class="search" name="q" placeholder="Rechercher un produit…" aria-label="Rechercher"></form>
