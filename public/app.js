@@ -40,12 +40,21 @@ async function home() {
   }).join('');
   const news = products.filter((p) => p.is_new && p.stock > 0).slice(0, 10);
   const ic = (d) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
-  const heroImg = '/img/hero.jpg';
+  const order = ['parfums', 'sacs', 'chaussures', 'bijoux', 'tenues', 'soins'];
+  const slideImgs = ['/img/hero.jpg'];
+  for (const slug of order) {
+    const cat = categories.find((c) => c.slug === slug);
+    const items = products.filter((p) => cat && p.category_id === cat.id && p.images?.[0]);
+    const pick = items.find((p) => p.is_new) || items[0];
+    if (pick) slideImgs.push(pick.images[0]);
+  }
+  while (slideImgs.length < 6) slideImgs.push(slideImgs[slideImgs.length - 1] || '/img/hero.jpg');
+  const slides = slideImgs.slice(0, 6).map((src, i) => `<img class="slide" style="--i:${i}" src="${esc(src)}" alt="" ${i ? 'loading="lazy"' : ''}>`).join('');
   const hello = S.user ? `<span class="hello">Bonjour ${esc(S.user.username)}</span>` : '';
   const cta = S.user
     ? '<a class="btn gold" href="#/catalog">Découvrir la boutique</a>'
     : `<button class="btn gold" data-act="login" type="button">Se connecter avec votre compte Pi</button><a class="btn light" href="#/catalog">Découvrir la boutique</a>`;
-  return `<section class="hero"><img src="${esc(heroImg)}" alt=""><div class="hero-in">${hello}<div class="eyebrow">Beauté · Bijoux · Mode</div>
+  return `<section class="hero"><div class="slides">${slides}</div><div class="hero-in">${hello}<div class="eyebrow">Beauté · Bijoux · Mode</div>
     <h1>Révélez votre <em>éclat</em>,<br>affirmez votre style.</h1>
     <p>Une sélection élégante, payée en Pi et livrée chez vous.</p><div class="cta">${cta}</div></div></section>
     <div class="trust">
