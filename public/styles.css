@@ -167,8 +167,8 @@ section[id^=cat-] .sec h2{font-size:1.9rem}
 
 .tabbar.hide{transform:translateY(105%)} .top{transition:transform .3s ease} .top.hide{transform:translateY(-105%)}
 
-/* Défilement des images de mode dans l'accueil (6 images, animations CSS sans script) */
+/* Défilement des images de mode dans l'accueil : une image toutes les 2 secondes (6 images, CSS seul) */
 .slides{position:absolute;inset:0;overflow:hidden}
-.slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.02);animation:slideFade 30s infinite;animation-delay:calc(var(--i) * 5s - 0.8s)}
-@keyframes slideFade{0%{opacity:0;transform:scale(1.02)}3%{opacity:1}16.67%{opacity:1;transform:scale(1.1)}20%{opacity:0;transform:scale(1.1)}100%{opacity:0;transform:scale(1.1)}}
+.slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.02);animation:slideFade 12s infinite;animation-delay:calc(var(--i) * 2s - .3s)}
+@keyframes slideFade{0%{opacity:0;transform:scale(1.02)}3%{opacity:1}16.67%{opacity:1;transform:scale(1.07)}19.5%{opacity:0;transform:scale(1.07)}100%{opacity:0;transform:scale(1.07)}}
 @media(prefers-reduced-motion:reduce){.slide{animation:none!important}.slide:not(:first-child){display:none}.slide:first-child{opacity:1}}
