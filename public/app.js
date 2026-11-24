@@ -239,7 +239,10 @@ async function render() {
 }
 
 // ---------- Actions ----------
-const msg = (t) => { const m = document.getElementById('pay-msg'); if (m) m.textContent = t || ''; };
+const msg = (t) => {
+  const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
+  if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }
+};
 const refreshFavs = async () => { if (S.user) { try { S.favs = new Set(await api('/api/favorites')); } catch { /* ignore */ } } };
 const sel = () => { const v = {}; document.querySelectorAll('[data-var]').forEach((s) => { v[s.dataset.name] = s.value; }); return Object.entries(v).map(([k, x]) => `${k} : ${x}`).join(', ') || null; };
 let pq = 1;
@@ -267,7 +270,14 @@ function quickAdd(id) {
 Object.assign(acts, {
   account: () => go('#/account'),
   payout: async (el) => { el.disabled = true; try { const r = await requestTestnetPayout(); toast(`Envoi de test reçu : ${r.amount} Pi (Testnet)`); } catch (e) { toast(e.message || 'Envoi impossible'); } el.disabled = false; },
-  login: async () => { try { await login(); await refreshFavs(); toast(`Bienvenue ${S.user.username}`); render(); } catch (e) { msg(e.message); } },
+  login: async (el) => {
+    const label = el?.textContent; if (el) { el.disabled = true; el.textContent = 'Connexion en cours…'; }
+    const n = document.getElementById('notice'); n.hidden = true;
+    try {
+      await Promise.race([login(), new Promise((_, rej) => setTimeout(() => rej(new Error('Pi ne répond pas. Vérifiez que l\'application est ouverte dans le Pi Browser, enregistrée et validée dans le Portail développeur, puis réessayez.')), 30000))]);
+      await refreshFavs(); toast(`Connexion réussie. Bienvenue ${S.user.username}`); render();
+    } catch (e) { msg(e?.message || 'Connexion impossible. Réessayez.'); if (el) { el.disabled = false; el.textContent = label; } }
+  },
   logout: () => { logout(); render(); },
   thumb: (el) => { document.getElementById('main-img').src = el.src; document.querySelectorAll('.thumbs img').forEach((i) => i.classList.toggle('on', i === el)); },
   pqty: (el) => { const p = prod(location.hash.split('/')[2]); pq = Math.max(1, Math.min(p?.stock || 1, pq + Number(el.dataset.d))); document.getElementById('pq').textContent = pq; },
