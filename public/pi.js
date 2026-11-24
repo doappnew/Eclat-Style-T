@@ -2,12 +2,20 @@
 import { api, saveSession, toast } from './core.js';
 
 export const hasPi = () => typeof window.Pi !== 'undefined';
+// Le « Run in Sandbox » du Portail ouvre la boutique dans un cadre sandbox.minepi.com : le SDK doit alors être initialisé en mode sandbox.
+// Hors sandbox (ouverture directe), rien ne change : Pi.init({ version: '2.0' }).
+export const isSandbox = () => {
+  try {
+    const anc = Array.from(window.location.ancestorOrigins || []).join(' ');
+    return window.top !== window.self && /sandbox\.minepi\.com/.test(`${anc} ${document.referrer}`);
+  } catch { return false; }
+};
 let ready = false;
 let pending = [];
 
 function init() {
   if (!hasPi()) throw new Error('Ouvrez cette boutique dans le Pi Browser pour vous connecter et payer en Pi.');
-  if (!ready) { window.Pi.init({ version: '2.0' }); ready = true; }
+  if (!ready) { window.Pi.init(isSandbox() ? { version: '2.0', sandbox: true } : { version: '2.0' }); ready = true; }
 }
 
 // Le SDK signale un paiement resté en suspens avant que la session existe : on le traite après connexion.

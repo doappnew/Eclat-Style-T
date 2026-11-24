@@ -1,5 +1,5 @@
 import { S, acts, forms, changes, store, esc, fmt, unit, placeholder, api, toast, go, saveSession, logout, saveCart } from './core.js';
-import { hasPi, login, pay, requestTestnetPayout } from './pi.js';
+import { hasPi, isSandbox, login, pay, requestTestnetPayout } from './pi.js';
 import { PAGES } from './pages.js';
 
 const view = document.getElementById('view');
@@ -187,7 +187,7 @@ async function favorites() {
 function needLogin(msg) {
   return `<h1>Connexion</h1><p>${esc(msg)}</p><button class="btn gold" data-act="login">Se connecter avec Pi</button><p id="pay-msg" class="err"></p>
     ${hasPi() ? '' : '<p class="muted">La connexion Pi fonctionne uniquement dans le Pi Browser.</p>'}
-    <div class="panel muted" style="font-size:.8rem;line-height:1.7"><b>Diagnostic</b><br>Adresse ouverte : ${esc(location.origin)}<br>SDK Pi présent : ${hasPi() ? 'oui' : 'non'}<br>Version de l'app : ${APP_VERSION}</div>`;
+    <div class="panel muted" style="font-size:.8rem;line-height:1.7"><b>Diagnostic</b><br>Adresse ouverte : ${esc(location.origin)}<br>SDK Pi présent : ${hasPi() ? 'oui' : 'non'}<br>Mode sandbox : ${isSandbox() ? 'oui' : 'non'}<br>Version de l'app : ${APP_VERSION}</div>`;
 }
 
 async function account() {
@@ -247,7 +247,7 @@ async function render() {
 }
 
 // ---------- Actions ----------
-const APP_VERSION = 'v14';
+const APP_VERSION = 'v15';
 const msg = (t) => {
   const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
   if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }
