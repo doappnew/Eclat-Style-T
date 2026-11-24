@@ -30,7 +30,7 @@ async function home() {
   const { categories, products } = S.cat;
   const cats = categories.map((c, i) => {
     const items = products.filter((x) => x.category_id === c.id); const p = items[0];
-    return `<a class="tile" href="#/catalog?cat=${c.slug}"><img loading="lazy" src="${img(p || {}, i)}" alt=""><span>${esc(c.name)}<small>${items.length} produit${items.length > 1 ? 's' : ''}</small></span></a>`;
+    return `<a class="tile" href="#/catalog?cat=${c.slug}"><img loading="lazy" src="${img(p || {}, i)}" alt=""><span>${esc(c.name)}</span></a>`;
   }).join('');
   const sections = categories.map((c) => {
     const items = products.filter((p) => p.category_id === c.id);
@@ -53,19 +53,13 @@ async function home() {
   const hello = S.user ? `<span class="hello">Bonjour ${esc(S.user.username)}</span>` : '';
   const cta = S.user
     ? '<a class="btn gold" href="#/catalog">Découvrir la boutique</a>'
-    : `<button class="btn gold" data-act="login" type="button">Se connecter avec votre compte Pi</button><a class="btn light" href="#/catalog">Découvrir la boutique</a>`;
-  return `<section class="hero"><div class="slides">${slides}</div><div class="hero-in">${hello}<div class="eyebrow">Beauté · Bijoux · Mode</div>
-    <h1>Révélez votre <em>éclat</em>,<br>affirmez votre style.</h1>
-    <p>Une sélection élégante, payée en Pi et livrée chez vous.</p><div class="cta">${cta}</div></div></section>
-    <div class="trust">
-      <div>${ic('M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a1.5 1.5 0 1 0 0-.01M17 19a1.5 1.5 0 1 0 0-.01')}Livraison organisée par la boutique</div>
-      <div>${ic('M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3Zm-3 9 2 2 4-4')}Paiement sécurisé en Pi</div>
-      <div>${ic('M12 3l2.6 5.4 5.9.9-4.3 4.1 1 5.9L12 16.5 6.8 19.3l1-5.9L3.5 9.3l5.9-.9L12 3Z')}Sélection de qualité</div></div>
-    <form data-form="search"><input class="search" name="q" placeholder="Rechercher un produit…" aria-label="Rechercher"></form>
-    ${S.user ? '' : `<div class="loginband"><h3>Pionniers, bienvenue</h3><p>Connectez-vous en un geste avec votre compte Pi pour commander, payer en Pi et suivre vos livraisons.</p><button class="btn gold" data-act="login" type="button">Se connecter avec Pi</button><p style="margin:12px 0 0;font-size:.78rem;color:#b9c3d8">En vous connectant, vous acceptez nos <a href="#/page/conditions" style="color:#e9d29a"><u>conditions d'utilisation</u></a> et notre <a href="#/page/confidentialite" style="color:#e9d29a"><u>politique de confidentialité</u></a>.</p></div>`}
-    <div class="sec"><h2>Nos catégories</h2></div><div class="tiles">${cats}</div>
+    : `<button class="btn gold" data-act="login" type="button">Se connecter avec Pi</button><a class="hero-link" href="#/catalog">Voir la boutique</a>`;
+  return `<section class="hero"><div class="slides">${slides}</div><div class="hero-in">${hello}
+    <h1>Révélez votre <em>éclat</em></h1>
+    <p>Beauté, bijoux et mode, payés en Pi.</p><div class="cta">${cta}</div></div></section>
+    <div class="sec"><h2>Catégories</h2></div><div class="tiles">${cats}</div>
     ${news.length ? `<div class="band"><div class="sec"><h2>Nouveautés</h2><a href="#/catalog?sort=new">Tout voir</a></div><div class="hrail">${news.map(card).join('')}</div></div>` : ''}
-    <div class="big-title"><h1>Nos produits</h1><div class="orn">✦</div><p>Classés par catégorie, prix en Pi</p></div>
+    <div class="big-title"><h1>Nos produits</h1><div class="orn">✦</div></div>
     ${sections}`;
 }
 
