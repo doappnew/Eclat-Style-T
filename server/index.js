@@ -29,6 +29,8 @@ const app = express();
 app.set('trust proxy', 1);
 app.use(helmet({
   frameguard: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -38,6 +40,7 @@ app.use(helmet({
       connectSrc: ["'self'", 'https://api.minepi.com', 'https://*.minepi.com'],
       frameSrc: ["'self'", 'https://*.minepi.com', 'https://*.pinet.com'],
       objectSrc: ["'none'"],
+      frameAncestors: ["'self'", 'https://*.minepi.com', 'https://minepi.com', 'https://*.pinet.com', 'https://pinet.com'],
     },
   },
 }));
