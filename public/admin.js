@@ -5,13 +5,13 @@ const NEXT = {
   awaiting_payment: ['cancelled'], paid: ['preparing', 'cancelled', 'refunded'], preparing: ['shipping', 'cancelled', 'refunded'],
   shipping: ['delivered', 'cancelled', 'refunded'], delivered: ['refunded'], cancelled: [], refunded: [],
 };
-const tabs = [['orders', 'Commandes'], ['products', 'Produits'], ['zones', 'Livraison'], ['stats', 'Statistiques']];
+const tabs = [['orders', 'Commandes'], ['products', 'Produits'], ['zones', 'Livraison'], ['stats', 'Statistiques'], ['pioneers', 'Pionniers']];
 let editId = null;
 
 export async function render(q) {
   const tab = q.get('tab') || 'orders';
   const head = `<h1>Administration</h1><div class="tabs">${tabs.map(([k, n]) => `<a class="chip ${tab === k ? 'on' : ''}" href="#/admin?tab=${k}">${n}</a>`).join('')}</div>`;
-  return head + await ({ orders, products, zones, stats }[tab] || orders)();
+  return head + await ({ orders, products, zones, stats, pioneers }[tab] || orders)();
 }
 
 async function orders() {
@@ -102,4 +102,13 @@ async function stats() {
   return `<div class="panel"><div class="tot big"><span>Ventes confirmées</span><span>${fmt(s.revenue_pi)}</span></div><div class="tot"><span>Commandes payées</span><span>${s.paid_orders}</span></div></div>
     <div class="panel"><h3>Par statut</h3>${Object.entries(s.byStatus).map(([k, v]) => `<div class="tot"><span>${statusLabel(k)}</span><span>${v}</span></div>`).join('') || '—'}</div>
     <div class="panel"><h3>Meilleures ventes</h3>${s.top.map((t) => `<div class="tot"><span>${esc(t.name)}</span><span>${t.qty}</span></div>`).join('') || '—'}</div>`;
+}
+
+async function pioneers() {
+  const r = await api('/api/admin/pioneers');
+  const mark = (v) => (v ? '✔' : '✖');
+  const rows = r.list.map((p) => `<tr><td>${esc(p.username)}</td><td>${p.step} / 3 ${p.validated ? '✔' : ''}</td><td>${mark(p.login_ok)} ${mark(p.u2a_done)} ${mark(p.a2u_done)}</td><td>${new Date(p.updated_at).toLocaleString('fr-FR')}</td></tr>`).join('');
+  return `<div class="panel"><div class="tot big"><span>Pionniers validés (Testnet)</span><span>${r.count} / ${r.cap}</span></div>
+    <p class="muted">Étapes : 1 connexion · 2 paiement de test · 3 envoi de test reçu.</p></div>
+    <div class="panel" style="overflow-x:auto"><table><tr><th>Utilisateur</th><th>Étape</th><th>1 2 3</th><th>Date</th></tr>${rows || '<tr><td colspan="4">Aucun pionnier pour le moment.</td></tr>'}</table></div>`;
 }

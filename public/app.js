@@ -190,10 +190,23 @@ function needLogin(msg) {
     <div class="panel muted" style="font-size:.8rem;line-height:1.7"><b>Diagnostic</b><br>Adresse ouverte : ${esc(location.origin)}<br>SDK Pi présent : ${hasPi() ? 'oui' : 'non'}<br>Version de l'app : ${APP_VERSION}</div>`;
 }
 
-function account() {
+async function account() {
   if (!S.user) return needLogin('Connectez-vous avec votre compte Pi pour commander et suivre vos achats.');
-  return `<h1>Mon compte</h1><div class="panel"><b>${esc(S.user.username)}</b></div>
-    <div class="panel"><a href="#/orders">Mes commandes</a><br><br><a href="#/favorites">Mes favoris</a>${S.config.testnetPayout ? '<br><br><button class="btn ghost block" data-act="payout" type="button">Recevoir mon envoi de test (Testnet)</button>' : ''}${S.user.role === 'admin' ? '<br><br><a href="#/admin"><b>Espace administration</b></a>' : ''}</div>
+  let test = '';
+  if (S.config.testnetPayout) {
+    try {
+      const p = await api('/api/pioneer/me'); const ok = (v) => (v ? '<b class="okc">✔</b>' : '<b class="err">✖</b>');
+      test = `<div class="panel"><h3>Test Testnet des pionniers</h3>
+        <p class="muted" style="margin:0 0 8px">Réseau Pi Testnet : aucun Pi réel. Pionniers validés : ${p.count} / ${p.cap}</p>
+        <div class="tot"><span>1 · Connexion</span>${ok(p.login_ok)}</div>
+        <div class="tot"><span>2 · Paiement de test</span>${ok(p.u2a_done)}</div>
+        <div class="tot"><span>3 · Envoi de test reçu</span>${ok(p.a2u_done)}</div>
+        ${p.validated ? '<p class="okc" style="margin:10px 0 0">Compte validé, merci !</p>' : ''}
+        <br><button class="btn ghost block" data-act="payout" type="button">Recevoir mon envoi de test (Testnet)</button></div>`;
+    } catch { /* le suivi ne bloque jamais le compte */ }
+  }
+  return `<h1>Mon compte</h1><div class="panel"><b>${esc(S.user.username)}</b></div>${test}
+    <div class="panel"><a href="#/orders">Mes commandes</a><br><br><a href="#/favorites">Mes favoris</a>${S.user.role === 'admin' ? '<br><br><a href="#/admin">Administration</a>' : ''}</div>
     <button class="btn ghost block" data-act="logout">Se déconnecter</button>`;
 }
 
@@ -234,7 +247,7 @@ async function render() {
 }
 
 // ---------- Actions ----------
-const APP_VERSION = 'v13';
+const APP_VERSION = 'v14';
 const msg = (t) => {
   const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
   if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }
@@ -265,7 +278,7 @@ function quickAdd(id) {
 
 Object.assign(acts, {
   account: () => go('#/account'),
-  payout: async (el) => { el.disabled = true; try { const r = await requestTestnetPayout(); toast(`Envoi de test reçu : ${r.amount} Pi (Testnet)`); } catch (e) { toast(e.message || 'Envoi impossible'); } el.disabled = false; },
+  payout: async (el) => { el.disabled = true; try { const r = await requestTestnetPayout(); toast(`Envoi de test reçu : ${r.amount} Pi (Testnet)`); render(); } catch (e) { toast(e.message || 'Envoi impossible'); } el.disabled = false; },
   login: async (el) => {
     const label = el?.textContent; if (el) { el.disabled = true; el.textContent = 'Connexion en cours…'; }
     const n = document.getElementById('notice'); n.hidden = true;
