@@ -330,14 +330,19 @@ document.addEventListener('click', () => { const d = document.documentElement; i
 
 // ---------- Barres masquées au défilement vers le bas, réaffichées vers le haut ----------
 (() => {
-  const bar = document.querySelector('.tabbar'); const top = document.querySelector('.top'); let last = window.scrollY;
+  const bar = document.querySelector('.tabbar'); const top = document.querySelector('.top'); let last = window.scrollY; let idle;
+  const show = () => { bar.classList.remove('hide'); top.classList.remove('hide'); };
+  const hide = () => { bar.classList.add('hide'); top.classList.add('hide'); };
   window.addEventListener('scroll', () => {
-    const y = window.scrollY; const d = y - last;
-    if (Math.abs(d) < 8) return;
-    const hide = d > 0 && y > 80;
-    bar.classList.toggle('hide', hide); top.classList.toggle('hide', hide); last = y;
+    const y = window.scrollY; const d = y - last; clearTimeout(idle);
+    const nearEnd = window.innerHeight + y >= document.documentElement.scrollHeight - 80;
+    if (y < 80 || d < -2 || nearEnd) show();            // en haut, en remontant ou en fin de page
+    else if (d > 8) hide();                              // en descendant
+    last = y;
+    idle = setTimeout(show, 1200);                       // les barres reviennent toujours quand le défilement s'arrête
   }, { passive: true });
-  window.addEventListener('hashchange', () => { bar.classList.remove('hide'); top.classList.remove('hide'); });
+  document.addEventListener('touchstart', () => { if (bar.classList.contains('hide')) idle = setTimeout(show, 1200); }, { passive: true });
+  window.addEventListener('hashchange', show);
 })();
 
 // ---------- Page de bienvenue (disparaît seule après ~3 s) ----------
