@@ -77,12 +77,20 @@ app.use('/api', loadUser);
 const requireAuth = (req, _res, next) => (req.user ? next() : next(new HttpError(401, 'Connexion requise')));
 const requireAdmin = (req, _res, next) => (req.user?.role === 'admin' ? next() : next(new HttpError(403, 'Accès réservé aux administrateurs')));
 
+// Erreurs du SDK Pi côté navigateur (aucun jeton ni donnée personnelle : 300 caractères, texte nettoyé)
+app.post('/api/client-log', strict, (req, res) => {
+  const raw = String(req.body?.message ?? '').replace(/[\r\n\t]+/g, ' ').replace(/[A-Za-z0-9_\-.]{40,}/g, '[masqué]').slice(0, 300);
+  const origin = String(req.body?.origin ?? '').replace(/[^\w:/.\-]/g, '').slice(0, 100);
+  console.error(`auth: échec SDK ${raw} (${origin})`);
+  res.json({ ok: true });
+});
+
 app.post('/api/auth/pi', strict, wrap(async (req, res) => {
   const token = String(req.body?.accessToken || '');
   if (token.length < 10) throw new HttpError(400, 'Jeton manquant');
   let me;
   try { me = await piMe(token); } catch (e) {
-    if (e instanceof PiError) throw new HttpError(401, 'Connexion Pi refusée. Ouvrez l\'application dans le Pi Browser.');
+    if (e instanceof PiError) { console.error(`auth: API Pi GET /me ${e.status} ${e.code}`.slice(0, 200)); throw new HttpError(401, 'Connexion Pi refusée. Ouvrez l\'application dans le Pi Browser.'); }
     throw e;
   }
   const user = must(await db.from('users')
