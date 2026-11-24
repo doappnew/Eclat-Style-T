@@ -21,9 +21,27 @@ const pi = makePiPayments(env.PI_API_KEY || '');
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
+import { PIONEER_CAP, isValidated, stepOf, mergeFlags, canPayout } from './lib/pioneers.js';
+
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 const must = ({ data, error }) => { if (error) throw error; return data; };
 const log = (event, detail = {}) => db.from('events').insert({ event, detail }).then(() => {}, () => {});
+
+
+// ---------- Suivi du test Testnet des pionniers (n'interrompt jamais la connexion ni le paiement) ----------
+async function markPioneer(userId, patch) {
+  try {
+    const row = (await db.from('pioneer_test').select('*').eq('user_id', userId).maybeSingle()).data;
+    const flags = mergeFlags(row, patch);
+    if (row && flags.login_ok === row.login_ok && flags.u2a_done === row.u2a_done && flags.a2u_done === row.a2u_done) return;
+    await db.from('pioneer_test').upsert({ user_id: userId, ...flags, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+  } catch (e) { console.error(`pioneer: suivi impossible ${String(e?.message || e).slice(0, 120)}`); }
+}
+const pioneerRow = async (userId) => (await db.from('pioneer_test').select('*').eq('user_id', userId).maybeSingle()).data || null;
+async function validatedCount() {
+  const { count } = await db.from('pioneer_test').select('user_id', { count: 'exact', head: true }).eq('login_ok', true).eq('u2a_done', true).eq('a2u_done', true);
+  return count || 0;
+}
 
 const app = express();
 app.set('trust proxy', 1);
@@ -96,6 +114,7 @@ app.post('/api/auth/pi', strict, wrap(async (req, res) => {
   const user = must(await db.from('users')
     .upsert({ pi_uid: me.uid, username: me.username, last_login_at: new Date().toISOString() }, { onConflict: 'pi_uid' })
     .select('id, pi_uid, username, role').single());
+  await markPioneer(user.id, { login_ok: true });
   res.json({ token: sign(user), user: { username: user.username, role: user.role } });
 }));
 
@@ -214,6 +233,7 @@ async function completeFlow(payment, user, clientTxid) {
   if (!payment.status?.developer_completed) await pi.complete(payment.identifier, txid);
   const result = must(await db.rpc('finalize_paid_order', { p_order: order.id, p_txid: txid }));
   await log('payment_completed', { paymentId: payment.identifier, orderId: order.id, result });
+  if (result === 'paid' || result === 'already') await markPioneer(user.id, { u2a_done: true });
   return { orderId: order.id, result };
 }
 
@@ -245,18 +265,22 @@ app.post('/api/payments/cancelled', requireAuth, wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+app.get('/api/pioneer/me', requireAuth, wrap(async (req, res) => {
+  const row = await pioneerRow(req.user.id);
+  res.json({ login_ok: !!row?.login_ok, u2a_done: !!row?.u2a_done, a2u_done: !!row?.a2u_done, validated: isValidated(row), count: await validatedCount(), cap: PIONEER_CAP });
+}));
+
 // ---------- Envoi de test (Testnet) : de l'application vers l'utilisateur (A2U) ----------
 // Fermé par défaut : actif seulement si TESTNET_PAYOUT=1 et PI_WALLET_SEED défini (variables Render, jamais dans le code).
 // Montant fixé par le serveur, un seul envoi par compte, plafond de comptes, réseau « Pi Testnet » vérifié.
 const PAYOUT_AMOUNT = Math.min(Number(env.TESTNET_PAYOUT_AMOUNT) || 0.1, 1);
-const PAYOUT_MAX = Math.min(Number(env.TESTNET_PAYOUT_MAX) || 20, 20);
 app.post('/api/testnet-payout', strict, requireAuth, wrap(async (req, res) => {
   if (env.TESTNET_PAYOUT !== '1' || !env.PI_WALLET_SEED || !env.PI_API_KEY) throw new HttpError(404, 'Indisponible');
   const uid = req.user.id;
   const existing = (await db.from('testnet_payouts').select('status').eq('user_id', uid).maybeSingle()).data;
   if (existing && existing.status !== 'failed') throw new HttpError(409, 'Un envoi de test a déjà été effectué pour ce compte.');
-  const { count } = await db.from('testnet_payouts').select('user_id', { count: 'exact', head: true }).neq('status', 'failed');
-  if ((count || 0) >= PAYOUT_MAX) throw new HttpError(403, 'Le nombre maximal d\'envois de test est atteint.');
+  const verdict = canPayout({ row: await pioneerRow(uid), validatedCount: await validatedCount() });
+  if (!verdict.ok) throw new HttpError(verdict.status, verdict.reason);
   must(await db.from('testnet_payouts').upsert({ user_id: uid, amount: PAYOUT_AMOUNT, status: 'pending', payment_id: null, txid: null }, { onConflict: 'user_id' }));
   let paymentId = null;
   try {
@@ -270,6 +294,7 @@ app.post('/api/testnet-payout', strict, requireAuth, wrap(async (req, res) => {
     await db.from('testnet_payouts').update({ txid }).eq('user_id', uid);
     await sdk.completePayment(paymentId, txid);
     await db.from('testnet_payouts').update({ status: 'completed' }).eq('user_id', uid);
+    await markPioneer(uid, { a2u_done: true });
     console.log(`payout: terminé ${paymentId}`);
     res.json({ ok: true, amount: PAYOUT_AMOUNT });
   } catch (e) {
@@ -283,6 +308,11 @@ app.post('/api/testnet-payout', strict, requireAuth, wrap(async (req, res) => {
 const admin = express.Router();
 admin.use(requireAuth, requireAdmin);
 
+admin.get('/pioneers', wrap(async (_req, res) => {
+  const rows = must(await db.from('pioneer_test').select('user_id, login_ok, u2a_done, a2u_done, created_at, updated_at, users(username)').order('updated_at', { ascending: false }).limit(200));
+  const list = rows.map((r) => ({ username: r.users?.username || '—', step: stepOf(r), validated: isValidated(r), login_ok: r.login_ok, u2a_done: r.u2a_done, a2u_done: r.a2u_done, updated_at: r.updated_at }));
+  res.json({ cap: PIONEER_CAP, count: list.filter((x) => x.validated).length, list });
+}));
 admin.get('/orders', wrap(async (_req, res) => {
   res.json(must(await db.from('orders').select(ORDER_COLS + ', payment_id, txid, needs_review').order('created_at', { ascending: false }).limit(300)));
 }));
