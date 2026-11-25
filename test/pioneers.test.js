@@ -12,9 +12,9 @@ test('plafond : 5 pionniers validés au maximum', () => {
   assert.equal(canPayout({ row: done, validatedCount: 9 }).ok, false);
 });
 
-test('envoi : paiement de test exigé, un seul envoi par compte', () => {
-  assert.equal(canPayout({ row: null, validatedCount: 0 }).ok, false);
-  assert.equal(canPayout({ row: { login_ok: true, u2a_done: false, a2u_done: false }, validatedCount: 0 }).ok, false);
+test('envoi : sans paiement de test préalable, un seul envoi par compte', () => {
+  assert.equal(canPayout({ row: null, validatedCount: 0 }).ok, true);
+  assert.equal(canPayout({ row: { login_ok: true, u2a_done: false, a2u_done: false }, validatedCount: 0 }).ok, true);
   const again = canPayout({ row: { ...done, a2u_done: true }, validatedCount: 0 });
   assert.equal(again.ok, false); assert.equal(again.status, 409);
 });
@@ -28,8 +28,9 @@ test('idempotence : une étape faite le reste, rejouer ne change rien', () => {
   assert.deepEqual(mergeFlags(c, { a2u_done: true }), { login_ok: true, u2a_done: true, a2u_done: true });
 });
 
-test('validation = 3 étapes ; étape affichée', () => {
+test('validation = connexion + envoi reçu ; étape affichée', () => {
   assert.equal(isValidated(done), false);
+  assert.equal(isValidated({ login_ok: true, u2a_done: false, a2u_done: true }), true);
   assert.equal(isValidated({ ...done, a2u_done: true }), true);
   assert.equal(stepOf(null), 0); assert.equal(stepOf({ login_ok: true }), 1); assert.equal(stepOf(done), 2); assert.equal(stepOf({ ...done, a2u_done: true }), 3);
 });

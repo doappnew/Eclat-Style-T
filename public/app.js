@@ -159,7 +159,8 @@ async function orders() {
   if (!S.user) return needLogin('Connectez-vous pour voir vos commandes.');
   const list = await api('/api/orders');
   return `<h1>Mes commandes</h1>${list.map((o) => `<a class="panel" href="#/order/${o.id}" style="display:block"><div class="row"><b class="grow">${esc(o.number)}</b><span class="badge ${o.status}">${statusLabel(o.status)}</span></div>
-    <div class="muted">${new Date(o.created_at).toLocaleDateString(LOCALE)} · ${fmt(o.total_pi)}</div></a>`).join('') || '<p>Aucune commande pour le moment.</p>'}`;
+    <div class="muted">${new Date(o.created_at).toLocaleDateString(LOCALE)} · ${fmt(o.total_pi)}</div>
+    ${o.order_items?.length ? `<div class="muted" style="font-size:.85rem">${o.order_items.map((i) => `${esc(i.name)} × ${i.qty}`).join(', ')}</div>` : ''}</a>`).join('') || '<p>Aucune commande pour le moment.</p>'}`;
 }
 
 const FLOW = ['paid', 'preparing', 'shipping', 'delivered'];
@@ -201,14 +202,15 @@ async function account() {
   const ok = (v) => (v ? '<b class="okc">✔</b>' : '<b class="err">✖</b>');
   test = `<div class="panel"><h3>Test Testnet des pionniers</h3>
     <p class="muted" style="margin:0 0 8px">Réseau Pi Testnet : aucun Pi réel. Pionniers validés : ${p.count} / ${p.cap}</p>
-    <div class="tot"><span>1 · Connexion</span>${ok(p.login_ok)}</div>
-    <div class="tot"><span>2 · Paiement de test</span>${ok(p.u2a_done)}</div>
-    <div class="tot"><span>3 · Envoi reçu</span>${ok(p.a2u_done)}</div>
+    <div class="tot"><span>1 · Connexion</span>${ok(true)}</div>
+    <div class="tot"><span>2 · Paiement de test (facultatif)</span>${ok(p.u2a_done)}</div>
+    <div class="tot"><span>3 · Envoi de test reçu</span>${ok(p.a2u_done)}</div>
     ${p.validated ? '<p class="okc" style="margin:10px 0 0">Compte validé, merci !</p>' : ''}
     <br><button class="btn ghost block" data-act="payout" type="button" ${on ? '' : 'disabled style="opacity:.5"'}>Recevoir mon envoi de test (Testnet)</button>
     ${on ? '' : '<p class="muted" style="margin:8px 0 0">Test pas encore activé par l\'administrateur.</p>'}</div>`;
   return `<h1>Mon compte</h1><div class="panel"><b>${esc(S.user.username)}</b></div>${test}
-    <div class="panel"><a href="#/orders">Mes commandes</a><br><br><a href="#/favorites">Mes favoris</a>${S.user.role === 'admin' ? '<br><br><a href="#/admin">Administration</a>' : ''}</div>
+    <a class="btn gold block" href="#/orders" style="margin-bottom:12px">Mes commandes</a>
+    <div class="panel"><a href="#/favorites">Mes favoris</a>${S.user.role === 'admin' ? '<br><br><a href="#/admin">Administration</a>' : ''}</div>
     <button class="btn ghost block" data-act="logout">Se déconnecter</button>`;
 }
 
@@ -262,13 +264,13 @@ async function render() {
   const hl = document.getElementById('hd-login');
   if (hl) { hl.textContent = S.user ? S.user.username : 'Connexion Pi'; hl.classList.toggle('on', !!S.user); hl.dataset.act = S.user ? 'account' : 'login'; }
   document.querySelectorAll('.tabbar a').forEach((a) => {
-    const key = a.dataset.tab; const on = (key === 'home' && path === '/') || (key !== 'home' && path.includes(key === 'account' ? 'account' : key));
+    const key = a.dataset.tab; const on = (key === 'home' && path === '/') || (key === 'orders' ? path.startsWith('/order') : key !== 'home' && path.includes(key));
     a.classList.toggle('on', on);
   });
 }
 
 // ---------- Actions ----------
-const APP_VERSION = 'v20';
+const APP_VERSION = 'v21';
 const msg = (t) => {
   const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
   if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }

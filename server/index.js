@@ -310,7 +310,7 @@ app.post('/api/testnet-payout', strict, requireAuth, wrap(async (req, res) => {
     await db.from('testnet_payouts').update({ txid }).eq('user_id', uid);
     await sdk.completePayment(paymentId, txid);
     await db.from('testnet_payouts').update({ status: 'completed' }).eq('user_id', uid);
-    await markPioneer(uid, { a2u_done: true });
+    await markPioneer(uid, { login_ok: true, a2u_done: true });
     console.log(`payout: terminé ${paymentId}`);
     res.json({ ok: true, amount: PAYOUT_AMOUNT });
   } catch (e) {

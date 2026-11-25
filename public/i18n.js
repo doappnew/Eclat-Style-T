@@ -10,7 +10,7 @@ export function setLang(l) { try { localStorage.setItem('lang', l); } catch { /*
 const D = {
   'Bienvenue chez Éclat & Style': 'Welcome to Éclat & Style',
   'Révélez votre éclat, affirmez votre style': 'Reveal your glow, assert your style',
-  'Connexion Pi': 'Pi sign-in', 'Panier': 'Cart', 'Accueil': 'Home', 'Favoris': 'Favourites', 'Compte': 'Account', 'Catalogue': 'Catalogue',
+  'Connexion Pi': 'Pi sign-in', 'Panier': 'Cart', 'Accueil': 'Home', 'Commandes': 'Orders', 'Favoris': 'Favourites', 'Compte': 'Account', 'Catalogue': 'Catalogue',
   'Livraison': 'Delivery', 'Retours': 'Returns', 'FAQ': 'FAQ', "Conditions d'utilisation": 'Terms of use', 'Conditions de vente': 'Terms of sale',
   'Confidentialité': 'Privacy', 'Contact': 'Contact',
   'Paiement en Pi, compatible Pi Network. Application indépendante, non affiliée à Pi Network ni approuvée par lui.': 'Payment in Pi, compatible with Pi Network. Independent application, not affiliated with or approved by Pi Network.',
@@ -47,7 +47,7 @@ const D = {
   'Favoris ': 'Favourites', 'Aucun favori pour le moment.': 'No favourites yet.',
   'La connexion Pi fonctionne uniquement dans le Pi Browser.': 'Pi sign-in only works in the Pi Browser.',
   'Diagnostic': 'Diagnostic', 'Mon compte': 'My account', 'Mes favoris': 'My favourites', 'Administration': 'Administration', 'Se déconnecter': 'Sign out',
-  'Test Testnet des pionniers': 'Pioneers Testnet test', '1 · Connexion': '1 · Sign-in', '2 · Paiement de test': '2 · Test payment', '3 · Envoi reçu': '3 · Transfer received',
+  'Test Testnet des pionniers': 'Pioneers Testnet test', '1 · Connexion': '1 · Sign-in', '2 · Paiement de test (facultatif)': '2 · Test payment (optional)', '3 · Envoi de test reçu': '3 · Test transfer received',
   'Compte validé, merci !': 'Account validated, thank you!', 'Recevoir mon envoi de test (Testnet)': 'Receive my test transfer (Testnet)',
   "Test pas encore activé par l'administrateur.": 'Test not yet enabled by the administrator.',
   'Page introuvable.': 'Page not found.', 'Accès refusé': 'Access denied', 'Cet espace est réservé aux administrateurs.': 'This area is reserved for administrators.',
