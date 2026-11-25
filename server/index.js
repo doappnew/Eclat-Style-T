@@ -11,7 +11,7 @@ import { seedZones } from './lib/zones.js';
 import { piMe, makePiPayments, PiError } from './lib/pi.js';
 import { computeTotals, unitPrice } from './lib/pricing.js';
 import { checkPaymentMatchesOrder } from './lib/payments.js';
-import { networkOf, startupProblems, payoutOpen, paymentCap } from './lib/network.js';
+import { networkOf, startupProblems, payoutOpen, paymentCap, buildChecklist } from './lib/network.js';
 import { orderSchema, productSchema, zoneSchema, orderPatchSchema } from './lib/validate.js';
 
 const env = process.env;
@@ -382,6 +382,18 @@ admin.post('/upload', wrap(async (req, res) => {
   res.json({ url: db.storage.from('products').getPublicUrl(p).data.publicUrl });
 }));
 
+admin.get('/mainnet-check', wrap(async (_req, res) => {
+  const [demoActive, zones, products] = await Promise.all([
+    demoActiveCount(),
+    db.from('delivery_zones').select('active, fee_pi').then(must),
+    db.from('products').select('name').eq('active', true).then(must),
+  ]);
+  let pagesOk = false;
+  try { const { PAGES } = await import('../public/pages.js'); pagesOk = ['confidentialite', 'conditions', 'cgv', 'contact'].every((k) => PAGES[k]); } catch { /* page introuvable */ }
+  const items = buildChecklist({ env, demoActive, zones, productNames: products.map((p) => p.name), pagesOk });
+  res.json({ network: NETWORK, demoActive, ready: items.every((i) => i.ok), items,
+    note: "Cette liste ne dit pas que Pi a approuvé l'application : cela se vérifie dans le Portail développeur." });
+}));
 admin.get('/stats', wrap(async (_req, res) => {
   const orders = must(await db.from('orders').select('status, total_pi, paid_at, order_items(name, qty)').limit(5000));
   const paid = orders.filter((o) => ['paid', 'preparing', 'shipping', 'delivered'].includes(o.status));

@@ -5,13 +5,17 @@ const NEXT = {
   awaiting_payment: ['cancelled'], paid: ['preparing', 'cancelled', 'refunded'], preparing: ['shipping', 'cancelled', 'refunded'],
   shipping: ['delivered', 'cancelled', 'refunded'], delivered: ['refunded'], cancelled: [], refunded: [],
 };
-const tabs = [['orders', 'Commandes'], ['products', 'Produits'], ['zones', 'Livraison'], ['stats', 'Statistiques'], ['pioneers', 'Pionniers']];
+const tabs = [['orders', 'Commandes'], ['products', 'Produits'], ['zones', 'Livraison'], ['stats', 'Statistiques'], ['pioneers', 'Pionniers'], ['mainnet', 'Mainnet']];
 let editId = null;
 
 export async function render(q) {
   const tab = q.get('tab') || 'orders';
   const head = `<h1>Administration</h1><div class="tabs">${tabs.map(([k, n]) => `<a class="chip ${tab === k ? 'on' : ''}" href="#/admin?tab=${k}">${n}</a>`).join('')}</div>`;
-  return head + await ({ orders, products, zones, stats, pioneers }[tab] || orders)();
+  let alert = '';
+  if (S.config.network === 'mainnet' && tab !== 'mainnet') {
+    try { const c = await api('/api/admin/mainnet-check'); if (c.demoActive) alert = `<div class="panel err"><b>Alerte :</b> ${c.demoActive} produit(s) « démo » actif(s) en Mainnet. Désactivez-les (onglet Produits).</div>`; } catch { /* ignoré */ }
+  }
+  return head + alert + await ({ orders, products, zones, stats, pioneers, mainnet }[tab] || orders)();
 }
 
 async function orders() {
@@ -111,4 +115,13 @@ async function pioneers() {
   return `<div class="panel"><div class="tot big"><span>Pionniers validés (Testnet)</span><span>${r.count} / ${r.cap}</span></div>
     <p class="muted">Étapes : 1 connexion · 2 paiement de test · 3 envoi de test reçu.</p></div>
     <div class="panel" style="overflow-x:auto"><table><tr><th>Utilisateur</th><th>Étape</th><th>1 2 3</th><th>Date</th></tr>${rows || '<tr><td colspan="4">Aucun pionnier pour le moment.</td></tr>'}</table></div>`;
+}
+
+async function mainnet() {
+  const c = await api('/api/admin/mainnet-check');
+  const mark = (ok) => (ok ? '<b class="okc">✔</b>' : '<b class="err">✖</b>');
+  return `<div class="panel"><h3>Liste de contrôle Mainnet</h3>
+    <p class="muted" style="margin:0 0 8px">Réseau actuel : ${esc(c.network)}. ${c.ready ? 'Tous les points sont validés.' : 'Des points restent à corriger.'}</p>
+    ${c.items.map((i) => `<div class="tot"><span>${esc(i.label)}${i.detail ? `<br><span class="muted" style="font-size:.8rem">${esc(i.detail)}</span>` : ''}</span>${mark(i.ok)}</div>`).join('')}
+    <p class="muted" style="margin:12px 0 0">${esc(c.note)}</p></div>`;
 }
