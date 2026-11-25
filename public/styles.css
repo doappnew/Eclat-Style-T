@@ -189,3 +189,6 @@ section[id^=cat-] .sec h2{font-size:1.9rem}
 .welcome h1 em{color:var(--gold,#c9a24a);font-style:normal}
 .welcome p{max-width:30ch;margin:0}
 body.gated .tabbar,body.gated .icon-btn,body.gated #hd-login{display:none!important}
+
+/* Choix de langue */
+.pill.lang{background:transparent;border:1px solid var(--gold,#c9a24a);color:var(--gold,#c9a24a);min-width:44px;padding:6px 10px;font-weight:600}

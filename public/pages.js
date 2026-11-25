@@ -1,7 +1,7 @@
 // Textes modèles : à adapter à votre activité et à faire relire par un juriste avant l'ouverture au public.
 import { esc } from './core.js';
 
-const OWNER = { name: 'Nda Ahou Gisele Kouame', pi: 'gisahou7788', email: 'gisahou648@gmail.com' };
+export const OWNER = { name: 'Nda Ahou Gisele Kouame', pi: 'gisahou7788', email: 'gisahou648@gmail.com' };
 const ZONES = 'Afrique, États-Unis, Europe et Canada';
 const contact = (c) => `<p><b>Éditeur et responsable :</b> ${esc(OWNER.name)}<br>Compte Pi : ${esc(OWNER.pi)}<br>E-mail : ${esc(c.contactEmail || OWNER.email)}${c.contactPhone ? `<br>Téléphone / WhatsApp : ${esc(c.contactPhone)}` : ''}</p>
   <p>Le service est proposé en ${ZONES}.</p>`;

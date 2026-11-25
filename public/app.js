@@ -1,6 +1,8 @@
 import { S, acts, forms, changes, store, esc, fmt, unit, placeholder, api, toast, go, saveSession, logout, saveCart } from './core.js';
 import { hasPi, isSandbox, login, pay, requestTestnetPayout } from './pi.js';
 import { PAGES } from './pages.js';
+import { PAGES_EN } from './pages_en.js';
+import { LANG, LOCALE, setLang, t } from './i18n.js';
 
 const view = document.getElementById('view');
 const STATUS = {
@@ -102,7 +104,7 @@ function product([id]) {
     <label>Quantité</label><div class="qty"><button data-act="pqty" data-d="-1">−</button><span id="pq">1</span><button data-act="pqty" data-d="1">+</button></div>
     <div style="margin-top:18px;display:grid;gap:10px">
       <button class="btn gold block" data-act="add" data-id="${p.id}" ${p.stock < 1 ? 'disabled' : ''}>Ajouter au panier</button>
-      <button class="btn block" data-act="buy" data-id="${p.id}" ${p.stock < 1 ? 'disabled' : ''}>Acheter maintenant</button>
+      <button class="btn block" data-act="buy" data-id="${p.id}" ${p.stock < 1 ? 'disabled' : ''}>Payer maintenant</button>
       <button class="btn ghost block" data-act="fav" data-id="${p.id}">${S.favs.has(p.id) ? '♥ Retirer des favoris' : '♡ Ajouter aux favoris'}</button></div>`;
 }
 
@@ -157,7 +159,7 @@ async function orders() {
   if (!S.user) return needLogin('Connectez-vous pour voir vos commandes.');
   const list = await api('/api/orders');
   return `<h1>Mes commandes</h1>${list.map((o) => `<a class="panel" href="#/order/${o.id}" style="display:block"><div class="row"><b class="grow">${esc(o.number)}</b><span class="badge ${o.status}">${statusLabel(o.status)}</span></div>
-    <div class="muted">${new Date(o.created_at).toLocaleDateString('fr-FR')} · ${fmt(o.total_pi)}</div></a>`).join('') || '<p>Aucune commande pour le moment.</p>'}`;
+    <div class="muted">${new Date(o.created_at).toLocaleDateString(LOCALE)} · ${fmt(o.total_pi)}</div></a>`).join('') || '<p>Aucune commande pour le moment.</p>'}`;
 }
 
 const FLOW = ['paid', 'preparing', 'shipping', 'delivered'];
@@ -173,7 +175,7 @@ async function orderView([id], q) {
     <div class="panel"><h3>Articles</h3>${o.order_items.map((i) => `<div class="tot"><span>${esc(i.name)}${i.variant ? ` (${esc(i.variant)})` : ''} × ${i.qty}</span><span>${fmt(i.unit_price_pi * i.qty)}</span></div>`).join('')}
       <div class="tot"><span>Livraison</span><span>${fmt(o.delivery_fee_pi)}</span></div><div class="tot big"><span>Total</span><span>${fmt(o.total_pi)}</span></div></div>
     <div class="panel"><h3>Livraison</h3><div>${esc(o.recipient_name || o.full_name)} · ${esc(o.phone)}</div><div>${esc(o.address)}, ${esc(o.quartier)}, ${esc(o.commune)}</div><div>${esc(o.zone_city)}, ${esc(o.zone_country)}</div>
-      ${o.eta_date ? `<div>Livraison estimée : ${new Date(o.eta_date).toLocaleDateString('fr-FR')}</div>` : o.zone_eta ? `<div class="muted">Délai indicatif : ${esc(o.zone_eta)}</div>` : ''}
+      ${o.eta_date ? `<div>Livraison estimée : ${new Date(o.eta_date).toLocaleDateString(LOCALE)}</div>` : o.zone_eta ? `<div class="muted">Délai indicatif : ${esc(o.zone_eta)}</div>` : ''}
       ${o.tracking_number ? `<div>Suivi : <b>${esc(o.tracking_number)}</b></div>` : ''}${o.admin_comment ? `<div class="muted">${esc(o.admin_comment)}</div>` : ''}</div>
     <a class="btn ghost block" href="#/page/contact">Contacter le service client</a>`;
 }
@@ -211,7 +213,7 @@ async function account() {
 }
 
 const page = ([name]) => {
-  const p = PAGES[name];
+  const p = (LANG === 'en' && PAGES_EN[name]) || PAGES[name];
   if (!p) return '<p>Page introuvable.</p>';
   const body = typeof p.body === 'function' ? p.body(S.config) : p.body;
   return `<article class="page"><h1>${esc(p.title)}</h1>${body}</article>`;
@@ -266,7 +268,7 @@ async function render() {
 }
 
 // ---------- Actions ----------
-const APP_VERSION = 'v19';
+const APP_VERSION = 'v20';
 const msg = (t) => {
   const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
   if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }
@@ -296,6 +298,7 @@ function quickAdd(id) {
 }
 
 Object.assign(acts, {
+  lang: () => setLang(LANG === 'en' ? 'fr' : 'en'),
   account: () => go('#/account'),
   payout: async (el) => { el.disabled = true; try { const r = await requestTestnetPayout(); toast(`Envoi de test reçu : ${r.amount} Pi (Testnet)`); render(); } catch (e) { toast(e.message || 'Envoi impossible'); } el.disabled = false; },
   login: async (el) => {
@@ -379,6 +382,7 @@ const splash = document.getElementById('splash');
 if (splash) { setTimeout(() => { splash.classList.add('hide'); setTimeout(() => splash.remove(), 800); }, 3200); }
 
 // ---------- Démarrage ----------
+{ const lb = document.getElementById('hd-lang'); if (lb) lb.textContent = LANG === 'en' ? 'FR' : 'EN'; }
 (async () => {
   S.cart = store.get('cart') || []; saveCart();
   const ses = store.get('session');
