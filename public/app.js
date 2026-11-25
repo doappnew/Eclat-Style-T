@@ -193,18 +193,18 @@ function needLogin(msg) {
 async function account() {
   if (!S.user) return needLogin('Connectez-vous avec votre compte Pi pour commander et suivre vos achats.');
   let test = '';
-  if (S.config.testnetPayout) {
-    try {
-      const p = await api('/api/pioneer/me'); const ok = (v) => (v ? '<b class="okc">✔</b>' : '<b class="err">✖</b>');
-      test = `<div class="panel"><h3>Test Testnet des pionniers</h3>
-        <p class="muted" style="margin:0 0 8px">Réseau Pi Testnet : aucun Pi réel. Pionniers validés : ${p.count} / ${p.cap}</p>
-        <div class="tot"><span>1 · Connexion</span>${ok(p.login_ok)}</div>
-        <div class="tot"><span>2 · Paiement de test</span>${ok(p.u2a_done)}</div>
-        <div class="tot"><span>3 · Envoi de test reçu</span>${ok(p.a2u_done)}</div>
-        ${p.validated ? '<p class="okc" style="margin:10px 0 0">Compte validé, merci !</p>' : ''}
-        <br><button class="btn ghost block" data-act="payout" type="button">Recevoir mon envoi de test (Testnet)</button></div>`;
-    } catch { /* le suivi ne bloque jamais le compte */ }
-  }
+  const on = !!S.config.testnetPayout;
+  let p = { count: 0, cap: 5, login_ok: true, u2a_done: false, a2u_done: false, validated: false };
+  try { p = await api('/api/pioneer/me'); } catch { /* le suivi ne bloque jamais le compte */ }
+  const ok = (v) => (v ? '<b class="okc">✔</b>' : '<b class="err">✖</b>');
+  test = `<div class="panel"><h3>Test Testnet des pionniers</h3>
+    <p class="muted" style="margin:0 0 8px">Réseau Pi Testnet : aucun Pi réel. Pionniers validés : ${p.count} / ${p.cap}</p>
+    <div class="tot"><span>1 · Connexion</span>${ok(p.login_ok)}</div>
+    <div class="tot"><span>2 · Paiement de test</span>${ok(p.u2a_done)}</div>
+    <div class="tot"><span>3 · Envoi reçu</span>${ok(p.a2u_done)}</div>
+    ${p.validated ? '<p class="okc" style="margin:10px 0 0">Compte validé, merci !</p>' : ''}
+    <br><button class="btn ghost block" data-act="payout" type="button" ${on ? '' : 'disabled style="opacity:.5"'}>Recevoir mon envoi de test (Testnet)</button>
+    ${on ? '' : '<p class="muted" style="margin:8px 0 0">Test pas encore activé par l\'administrateur.</p>'}</div>`;
   return `<h1>Mon compte</h1><div class="panel"><b>${esc(S.user.username)}</b></div>${test}
     <div class="panel"><a href="#/orders">Mes commandes</a><br><br><a href="#/favorites">Mes favoris</a>${S.user.role === 'admin' ? '<br><br><a href="#/admin">Administration</a>' : ''}</div>
     <button class="btn ghost block" data-act="logout">Se déconnecter</button>`;
