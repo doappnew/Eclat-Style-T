@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { ZodError } from 'zod';
+import { seedZones } from './lib/zones.js';
 import { piMe, makePiPayments, PiError } from './lib/pi.js';
 import { computeTotals, unitPrice } from './lib/pricing.js';
 import { checkPaymentMatchesOrder } from './lib/payments.js';
@@ -403,6 +404,7 @@ app.use((err, _req, res, _next) => {
 });
 
 const port = Number(env.PORT) || 3000;
+seedZones(db).then((n) => console.log(`zones: ${n} ajoutée(s)`)).catch((e) => console.error('zones: échec', e?.message || e));
 app.listen(port, () => console.log(`Boutique démarrée sur le port ${port}`));
 
 // ---------- Service d'éveil ----------
