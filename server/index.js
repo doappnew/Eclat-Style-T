@@ -45,9 +45,12 @@ async function validatedCount() {
 
 const app = express();
 app.set('trust proxy', 1);
-// TEST connexion Pi : en-têtes de sécurité désactivés par défaut (comme DIL, qui se connecte). Remettre avec STRICT_HEADERS=1.
+// En-têtes de sécurité (réactivation progressive, STRICT_HEADERS) :
+//   (vide) = étape A : helmet SANS CSP, sans frameguard ni COOP (la connexion Pi fonctionne)
+//   1      = helmet avec CSP complète (étape B, à tester plus tard)
+//   0      = aucun en-tête helmet (retour arrière)
 if (env.STRICT_HEADERS === '1') {
-app.use(helmet({
+  app.use(helmet({
     frameguard: false,
     crossOriginOpenerPolicy: false,
     crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -63,6 +66,14 @@ app.use(helmet({
         frameAncestors: ["'self'", 'https://*.minepi.com', 'https://minepi.com', 'https://*.pinet.com', 'https://pinet.com'],
       },
     },
+  }));
+} else if (env.STRICT_HEADERS !== '0') {
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    frameguard: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   }));
 }
 
