@@ -48,3 +48,18 @@ Tests : `npm test`.
 
 ## Réseau (PI_NETWORK)
 `PI_NETWORK=testnet` (défaut) ou `mainnet`. Le même code sert les deux. En mainnet : le serveur refuse de démarrer sans `PI_API_KEY` et `PI_VALIDATION_KEY`, la route d'envoi de test est fermée (404) même avec `TESTNET_PAYOUT=1`, la section « Test Testnet » disparaît, et chaque paiement est refusé si `payment.network` ne correspond pas au réseau configuré (« Pi Network » pour le Mainnet, « Pi Testnet » pour le Testnet).
+
+## Passage au Mainnet
+Le même code sert les deux réseaux ; seules les variables d'environnement changent. Faites le passage dans un **service Render distinct** (ne touchez pas au service Testnet qui fonctionne).
+1. **Portail développeur Pi** : créez une application **Mainnet distincte** (différente de l'application Testnet). Enregistrez-y une **nouvelle adresse** (nouveau domaine Render) et faites-la vérifier : la clé de validation s'affiche, c'est elle qui va dans `PI_VALIDATION_KEY` (servie sur `/validation-key.txt`).
+2. **Nouvelle clé API** de cette application Mainnet, et **nouveau portefeuille de l'application** (jamais celui du Testnet). Ne communiquez jamais la phrase secrète du portefeuille.
+3. **Base de données** : projet Supabase distinct, schéma `supabase/001_schema.sql`.
+4. **Variables Render à changer** :
+   - `PI_NETWORK=mainnet`
+   - `PI_API_KEY` (clé de l'application Mainnet)
+   - `PI_VALIDATION_KEY` (clé de validation du nouveau domaine)
+   - `PI_WALLET_SEED` : à ne définir que si des envois depuis l'application sont nécessaires ; en Mainnet l'envoi de test reste de toute façon fermé (404), même avec `TESTNET_PAYOUT=1`
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SESSION_SECRET` (nouveaux), `CONTACT_EMAIL`, `CONTACT_PHONE`
+5. **Retirez `PI_MAX_PAYMENT`** quand vous êtes prêt à ouvrir sans plafond (le code le garde : il ne s'applique que s'il est défini).
+6. Le serveur **refuse de démarrer** en Mainnet sans `PI_API_KEY` ou `PI_VALIDATION_KEY`, ou s'il reste un produit « démo » actif. Chaque paiement est refusé si son réseau (`payment.network`) ne correspond pas à `PI_NETWORK`.
+7. Ouvrez Administration, onglet **Mainnet** : la liste de contrôle (calculée côté serveur) doit être entièrement cochée. Elle ne signifie pas que Pi a approuvé l'application : cette approbation se vérifie dans le Portail développeur.
