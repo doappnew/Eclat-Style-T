@@ -135,7 +135,7 @@ function checkout() {
       <label>Nom et prénom</label><input name="full_name" required maxlength="120" autocomplete="name">
       <label>Téléphone</label><input name="phone" type="tel" required maxlength="30" autocomplete="tel">
       <label>Zone de livraison (pays — ville)</label>
-      <select name="zoneId" data-change="zone">${zones.map((x) => `<option value="${x.id}" ${x.id === selZone ? 'selected' : ''}>${esc(x.country)} — ${esc(x.city)} (${fmt(x.fee_pi)})</option>`).join('')}</select>
+      <select name="zoneId" data-change="zone">${zoneOptions(zones)}</select>
       ${z?.eta ? `<div class="muted">Délai indicatif : ${esc(z.eta)}</div>` : ''}
       <label>Commune</label><input name="commune" required maxlength="120">
       <label>Quartier</label><input name="quartier" required maxlength="120">
@@ -223,6 +223,13 @@ async function adminView(_m, q) {
   return mod.render(q);
 }
 
+function zoneOptions(zones) {
+  const by = {}; for (const x of zones) (by[x.country] ||= []).push(x);
+  const rank = (c) => (c === 'Bénin' ? 0 : /^Autres/.test(c) ? 2 : 1);
+  return Object.keys(by).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b, 'fr')).map((c) =>
+    `<optgroup label="${esc(c)}">${by[c].map((x) => `<option value="${x.id}" ${x.id === selZone ? 'selected' : ''}>${esc(x.city)} (${fmt(x.fee_pi)})</option>`).join('')}</optgroup>`).join('');
+}
+
 function welcome() {
   return `<section class="welcome"><img class="wlogo" src="/logo-mark.png" alt="" onerror="this.remove()"><h1>Éclat <em>&amp;</em> Style</h1>
     <p>Beauté, bijoux et mode, payés en Pi. Connectez-vous pour entrer dans la boutique.</p>
@@ -259,7 +266,7 @@ async function render() {
 }
 
 // ---------- Actions ----------
-const APP_VERSION = 'v18';
+const APP_VERSION = 'v19';
 const msg = (t) => {
   const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
   if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }
