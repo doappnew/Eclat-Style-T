@@ -1,10 +1,13 @@
 // Textes modèles : à adapter à votre activité et à faire relire par un juriste avant l'ouverture au public.
 import { esc } from './core.js';
 
-const contact = (c) => `<p>${c.contactEmail ? `E-mail : ${esc(c.contactEmail)}<br>` : ''}${c.contactPhone ? `Téléphone / WhatsApp : ${esc(c.contactPhone)}` : 'Coordonnées à renseigner par le promoteur (variables CONTACT_EMAIL et CONTACT_PHONE).'}</p>`;
+const OWNER = { name: 'Nda Ahou Gisele Kouame', pi: 'gisahou7788', email: 'gisahou648@gmail.com' };
+const ZONES = 'Afrique, États-Unis, Europe et Canada';
+const contact = (c) => `<p><b>Éditeur et responsable :</b> ${esc(OWNER.name)}<br>Compte Pi : ${esc(OWNER.pi)}<br>E-mail : ${esc(c.contactEmail || OWNER.email)}${c.contactPhone ? `<br>Téléphone / WhatsApp : ${esc(c.contactPhone)}` : ''}</p>
+  <p>Le service est proposé en ${ZONES}.</p>`;
 
 export const PAGES = {
-  livraison: { title: 'Livraison', body: `<p>La livraison est organisée par le promoteur de la boutique, à domicile, dans les zones indiquées au moment de la commande.</p>
+  livraison: { title: 'Livraison', body: `<p>La livraison est organisée par le promoteur de la boutique, à domicile, dans les zones indiquées au moment de la commande. Le service est proposé en ${ZONES}.</p>
     <ul><li>Les frais et le délai indicatif dépendent de la zone choisie ; ils sont affichés avant le paiement.</li>
     <li>La préparation commence uniquement après confirmation du paiement en Pi.</li>
     <li>Vous suivez l'état de votre commande dans « Mes commandes » (numéro de suivi et date estimée si disponibles).</li>
@@ -19,7 +22,8 @@ export const PAGES = {
     <h3>Les images sont-elles contractuelles ?</h3><p>Certaines images sont des visuels de démonstration, remplacés par les photos réelles des produits.</p>` },
   cgv: { title: 'Conditions de vente', body: `<p>Les prix sont affichés en Pi, frais de livraison en sus. La commande est ferme et définitive après confirmation du paiement.</p>
     <p>Le promoteur se réserve le droit d'annuler et de rembourser une commande en cas d'indisponibilité du produit. Le stock affiché peut évoluer jusqu'à la confirmation du paiement.</p>
-    <p class="muted">Texte modèle : à compléter (identité du vendeur, droit de rétractation applicable dans votre pays, litiges) et à faire valider.</p>` },
+    <p>Vendeur : ${OWNER.name} (compte Pi ${OWNER.pi}), ${OWNER.email}. Service disponible en ${ZONES}.</p>
+    <p class="muted">Le droit de rétractation et les règles applicables dépendent de votre pays de résidence ; en cas de litige, contactez-nous d'abord à l'adresse ci-dessus.</p>` },
   confidentialite: { title: 'Politique de confidentialité', body: (c) => `<p class="muted">Dernière mise à jour : novembre 2026.</p>
     <p>Cette politique explique quelles données personnelles Éclat &amp; Style collecte, pourquoi, avec qui elles sont partagées et quels sont vos droits.</p>
     <h3>1. Données collectées</h3>
@@ -58,7 +62,7 @@ export const PAGES = {
     <h3>7. Propriété intellectuelle</h3><p>Les contenus de la boutique (textes, logo, mise en page) sont protégés. Les marques éventuellement citées appartiennent à leurs propriétaires ; seuls des produits authentiques sont vendus sous leur nom.</p>
     <h3>8. Indépendance vis-à-vis de Pi Network</h3><p>Éclat &amp; Style est une application indépendante, non affiliée à Pi Network et non approuvée par lui. Le mot « Pi » désigne uniquement la cryptomonnaie acceptée en paiement.</p>
     <h3>9. Responsabilité</h3><p>Nous mettons tout en œuvre pour un service fiable, sans garantie d'absence d'interruption. Notre responsabilité est limitée dans la mesure permise par la loi ; elle ne couvre pas les incidents propres au réseau Pi ou au Pi Browser.</p>
-    <h3>10. Modification et droit applicable</h3><p>Nous pouvons modifier ces conditions ; la date de mise à jour figure en haut. Le droit applicable et le tribunal compétent sont ceux du pays du promoteur (à préciser).</p>
+    <h3>10. Modification et droit applicable</h3><p>Nous pouvons modifier ces conditions ; la date de mise à jour figure en haut. Le droit applicable et le tribunal compétent sont ceux du pays de résidence de l'éditeur, sans priver le consommateur des droits impératifs de son propre pays.</p>
     <h3>11. Contact</h3>${contact(c)}
     <p class="muted">Texte modèle à adapter et à faire relire par un juriste avant l'ouverture au public.</p>` },
   contact: { title: 'Contact', body: (c) => `<p>Une question sur une commande ? Indiquez votre numéro de commande.</p>${contact(c)}

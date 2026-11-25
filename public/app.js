@@ -259,7 +259,7 @@ async function render() {
 }
 
 // ---------- Actions ----------
-const APP_VERSION = 'v17';
+const APP_VERSION = 'v18';
 const msg = (t) => {
   const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
   if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }
