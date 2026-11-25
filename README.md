@@ -34,3 +34,14 @@ Tests : `npm test`.
 
 ## Plafond de test
 `PI_MAX_PAYMENT=2` : le serveur refuse toute commande dont le total dépasse 2 Pi (retirer cette variable pour la production).
+
+## Dépannage connexion Pi
+**Symptôme :** « Pi : Authentication failed » dans le Pi Browser, avant même que le serveur soit appelé.
+
+**Cause :** les en-têtes de sécurité du serveur (helmet, surtout la politique CSP et les règles d'ouverture/cadre) empêchaient le SDK Pi de s'exécuter dans le Pi Browser. Ils sont donc désactivés par défaut : la variable `STRICT_HEADERS` pilote leur réactivation progressive (vide = helmet sans CSP, `1` = CSP complète, `0` = aucun en-tête helmet).
+
+**À savoir :**
+- La connexion demande uniquement le nom d'utilisateur (`username`). La permission `payments` n'est demandée qu'au moment de payer.
+- Ouvrir l'application dans le Pi Browser uniquement ; dans Chrome, le SDK Pi n'existe pas.
+- En cas de nouvel échec, regarder les journaux Render filtrés sur `auth:` (code de réponse de l'API Pi, sans aucun secret).
+- Pour tester la CSP complète : mettre `STRICT_HEADERS=1`, tester la connexion ; si elle échoue, remettre la valeur vide.
