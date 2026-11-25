@@ -393,7 +393,10 @@ app.use(express.static(path.join(here, '..', 'public'), {
 app.use('/api', (_req, _res, next) => next(new HttpError(404, 'Route inconnue')));
 
 app.use((err, _req, res, _next) => {
-  if (err instanceof ZodError) return res.status(400).json({ error: err.issues[0]?.message || 'Données invalides' });
+  if (err instanceof ZodError) return {
+    const known = err.issues.find((i) => /[ .]$/.test(i.message) && i.message !== 'Required');
+    return res.status(400).json({ error: known?.message || 'Veuillez remplir tous les champs obligatoires.' });
+  }
   if (err instanceof HttpError) return res.status(err.status).json({ error: err.message });
   console.error('error:', err?.message || err);
   res.status(500).json({ error: 'Erreur serveur' });
