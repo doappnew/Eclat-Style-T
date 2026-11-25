@@ -11,7 +11,7 @@ import { seedZones } from './lib/zones.js';
 import { piMe, makePiPayments, PiError } from './lib/pi.js';
 import { computeTotals, unitPrice } from './lib/pricing.js';
 import { checkPaymentMatchesOrder } from './lib/payments.js';
-import { networkOf, startupProblems, payoutOpen } from './lib/network.js';
+import { networkOf, startupProblems, payoutOpen, paymentCap } from './lib/network.js';
 import { orderSchema, productSchema, zoneSchema, orderPatchSchema } from './lib/validate.js';
 
 const env = process.env;
@@ -145,7 +145,7 @@ app.get('/api/me', requireAuth, (req, res) => res.json({ username: req.user.user
 // ---------- Boutique publique ----------
 app.get('/api/config', (_req, res) => res.json({
   shopName: env.SHOP_NAME || 'Éclat & Style', contactEmail: env.CONTACT_EMAIL || '', contactPhone: env.CONTACT_PHONE || '',
-  maxPayment: Number(env.PI_MAX_PAYMENT) || 0,
+  maxPayment: paymentCap(env),
   testnetPayout: payoutOpen(env),
   network: NETWORK,
 }));
@@ -192,8 +192,8 @@ app.post('/api/orders', requireAuth, strict, wrap(async (req, res) => {
   });
   // prix, frais et total sont décidés ICI, jamais par le navigateur
   const totals = computeTotals(lines, zone.fee_pi);
-  const cap = Number(env.PI_MAX_PAYMENT);
-  if (cap > 0 && totals.total > cap) throw new HttpError(400, `Montant maximal autorisé pendant la phase de test : ${cap} Pi. Réduisez votre panier.`);
+  const cap = paymentCap(env);
+  if (cap > 0 && totals.total > cap) throw new HttpError(400, `Montant maximal autorisé${NETWORK === 'testnet' ? ' pendant la phase de test' : ' par commande'} : ${cap} Pi. Réduisez votre panier.`);
 
   const order = must(await db.from('orders').insert({
     number: orderNumber(), user_id: req.user.id, status: 'awaiting_payment',
@@ -412,6 +412,16 @@ app.use((err, _req, res, _next) => {
 });
 
 const port = Number(env.PORT) || 3000;
+const demoActiveCount = async () => {
+  const { count, error } = await db.from('products').select('id', { count: 'exact', head: true }).eq('active', true).eq('is_demo', true);
+  if (error) throw error;
+  return count || 0;
+};
+// Mainnet : aucun produit de démonstration actif (prix de test) n'est toléré.
+if (NETWORK === 'mainnet') {
+  const n = await demoActiveCount();
+  if (n > 0) { console.error(`mainnet: démarrage refusé, ${n} produit(s) démo actif(s). Désactivez-les ou supprimez-les dans l'administration.`); process.exit(1); }
+}
 seedZones(db).then((n) => console.log(`zones: ${n} ajoutée(s)`)).catch((e) => console.error('zones: échec', e?.message || e));
 app.listen(port, () => console.log(`Boutique démarrée sur le port ${port}`));
 

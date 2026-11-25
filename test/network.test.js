@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { networkOf, startupProblems, payoutOpen, checkPaymentNetwork, findBlacklistedBrands, buildChecklist } from '../server/lib/network.js';
+import { networkOf, startupProblems, payoutOpen, checkPaymentNetwork, findBlacklistedBrands, buildChecklist, paymentCap } from '../server/lib/network.js';
 import { checkPaymentMatchesOrder } from '../server/lib/payments.js';
 
 test('réseau : testnet par défaut, valeurs invalides refusées', () => {
@@ -50,4 +50,9 @@ test('liste de contrôle mainnet', () => {
   assert.ok(ok.every((r) => r.ok));
   const ko = buildChecklist({ env: {}, demoActive: 2, zones: [], productNames: ['Gucci sac'], pagesOk: false });
   assert.ok(ko.every((r) => !r.ok));
+});
+
+test('plafond : seulement si défini', () => {
+  assert.equal(paymentCap({}), 0); assert.equal(paymentCap({ PI_MAX_PAYMENT: '0' }), 0); assert.equal(paymentCap({ PI_MAX_PAYMENT: 'x' }), 0);
+  assert.equal(paymentCap({ PI_MAX_PAYMENT: '2' }), 2);
 });

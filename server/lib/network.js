@@ -49,3 +49,6 @@ export function buildChecklist({ env, demoActive, zones, productNames, pagesOk }
     { id: 'pages', label: 'Pages légales présentes', ok: !!pagesOk },
   ];
 }
+
+// Plafond par commande : s'applique seulement si PI_MAX_PAYMENT est défini (> 0), sur les deux réseaux.
+export const paymentCap = (env) => { const n = Number(env.PI_MAX_PAYMENT); return Number.isFinite(n) && n > 0 ? n : 0; };
