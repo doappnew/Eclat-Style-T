@@ -84,6 +84,7 @@ const RX = [
   [/^Connexion réussie\. Bienvenue (.+)$/, (m) => `Signed in. Welcome ${m[1]}`],
   [/^Envoi de test reçu : (.+)$/, (m) => `Test transfer received: ${m[1]}`],
   [/^Réseau Pi Testnet : aucun Pi réel\. Pionniers validés : (.+)$/, (m) => `Pi Testnet network: no real Pi. Validated pioneers: ${m[1]}`],
+  [/^Montant maximal par commande (.+) Pi\.$/, (m) => `Maximum amount per order ${m[1]} Pi.`],
   [/^Phase de test : montant maximal par commande (.+) Pi\.$/, (m) => `Test phase: maximum amount per order ${m[1]} Pi.`],
   [/^Délai indicatif : (.+)$/, (m) => `Estimated time: ${m[1]}`],
   [/^Livraison estimée : (.+)$/, (m) => `Estimated delivery: ${m[1]}`],

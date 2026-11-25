@@ -56,7 +56,7 @@ export const PAGES_EN = {
     <h3>2. Account</h3><p>You sign in with your Pi account. You are responsible for the use of your account and the security of your device. We will never ask for your Pi passphrase.</p>
     <h3>3. Orders and prices</h3><ul><li>Prices are shown in Pi, delivery fees extra; the exact amount is calculated by our servers and shown before payment.</li>
     <li>An order is confirmed only after the payment is verified.</li><li>We may cancel and refund an order if a product is unavailable.</li></ul>
-    <h3>4. Test phase</h3><p>During the test phase, amounts may be capped per order, and products and visuals may be demonstration examples. Test payments have no commercial value.</p>
+    ${c.network === 'mainnet' ? `<h3>4. Prices and visuals</h3><p>Prices are shown in Pi. Visuals are indicative and may differ slightly from the delivered product. The amount may be capped per order.</p>` : `<h3>4. Test phase</h3><p>During the test phase, amounts may be capped per order, and products and visuals may be demonstration examples. Test payments have no commercial value.</p>`}
     <h3>5. Delivery, returns and refunds</h3><p>See the “Delivery” and “Returns” pages. An accepted refund is paid in Pi.</p>
     <h3>6. Acceptable use</h3><p>You must not try to bypass security, provide false information, use the app for fraud or money laundering, or disrupt the service.</p>
     <h3>7. Intellectual property</h3><p>The shop's content (texts, logo, layout) is protected. Any brands mentioned belong to their owners; only authentic products are sold under their name.</p>

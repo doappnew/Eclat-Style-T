@@ -120,7 +120,7 @@ function cart() {
     <button class="btn sm ghost" data-act="del" data-i="${i}">Retirer</button></div></div></div>`).join('')}
     <div class="panel" style="margin-top:14px"><div class="tot"><span>Sous-total</span><b>${fmt(cartSub())}</b></div>
     <div class="muted">Les frais de livraison sont calculés à l'étape suivante selon votre zone.</div></div>
-    ${S.config.maxPayment ? `<div class="testnote">Phase de test : montant maximal par commande ${S.config.maxPayment} Pi.</div>` : ''}
+    ${S.config.maxPayment ? `<div class="testnote">${S.config.network === 'mainnet' ? 'Montant maximal par commande' : 'Phase de test : montant maximal par commande'} ${S.config.maxPayment} Pi.</div>` : ''}
     <a class="btn gold block" href="#/checkout">Commander</a>`;
 }
 
@@ -173,7 +173,7 @@ function checkout() {
         <div class="tot"><span>Livraison</span><span>${fmt(fee)}</span></div>
         <div class="tot big"><span>Total à payer</span><span>${fmt(cartSub() + fee)}</span></div>
         <div class="muted">Le montant définitif est recalculé et confirmé par le serveur avant le paiement.</div></div>
-      ${S.config.maxPayment ? `<div class="testnote">Phase de test : montant maximal par commande ${S.config.maxPayment} Pi.</div>` : ''}
+      ${S.config.maxPayment ? `<div class="testnote">${S.config.network === 'mainnet' ? 'Montant maximal par commande' : 'Phase de test : montant maximal par commande'} ${S.config.maxPayment} Pi.</div>` : ''}
       <p class="muted">Paiement exclusivement en Pi, dans le Pi Browser.</p><p class="muted" style="margin-top:10px">En continuant, vous acceptez les <a href="#/page/conditions"><u>conditions d'utilisation</u></a> et la <a href="#/page/confidentialite"><u>politique de confidentialité</u></a>.</p>
       <button class="btn gold block" id="pay-btn">${S.user ? 'Payer en Pi' : 'Se connecter et payer en Pi'}</button>
       <p id="pay-msg" class="err" role="alert"></p></form>`;
@@ -288,7 +288,7 @@ async function render() {
 }
 
 // ---------- Actions ----------
-const APP_VERSION = 'v22';
+const APP_VERSION = 'v23';
 const msg = (t) => {
   const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
   if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }
