@@ -45,23 +45,27 @@ async function validatedCount() {
 
 const app = express();
 app.set('trust proxy', 1);
+// TEST connexion Pi : en-têtes de sécurité désactivés par défaut (comme DIL, qui se connecte). Remettre avec STRICT_HEADERS=1.
+if (env.STRICT_HEADERS === '1') {
 app.use(helmet({
-  frameguard: false,
-  crossOriginOpenerPolicy: false,
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https://sdk.minepi.com'],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'https://api.minepi.com', 'https://*.minepi.com'],
-      frameSrc: ["'self'", 'https://*.minepi.com', 'https://*.pinet.com'],
-      objectSrc: ["'none'"],
-      frameAncestors: ["'self'", 'https://*.minepi.com', 'https://minepi.com', 'https://*.pinet.com', 'https://pinet.com'],
+    frameguard: false,
+    crossOriginOpenerPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", 'https://sdk.minepi.com'],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", 'https://api.minepi.com', 'https://*.minepi.com'],
+        frameSrc: ["'self'", 'https://*.minepi.com', 'https://*.pinet.com'],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'", 'https://*.minepi.com', 'https://minepi.com', 'https://*.pinet.com', 'https://pinet.com'],
+      },
     },
-  },
-}));
+  }));
+}
+
 app.use(express.json({ limit: '6mb' }));
 app.use('/api', rateLimit({ windowMs: 15 * 60 * 1000, limit: 600, standardHeaders: true, legacyHeaders: false }));
 const strict = rateLimit({ windowMs: 15 * 60 * 1000, limit: 80, standardHeaders: true, legacyHeaders: false });
