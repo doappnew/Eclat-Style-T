@@ -142,7 +142,7 @@ app.get('/api/config', (_req, res) => res.json({
   testnetPayout: env.TESTNET_PAYOUT === '1' && !!env.PI_WALLET_SEED,
 }));
 
-app.get('/api/catalog', wrap(async (_req, res) => {
+app.get('/api/catalog', requireAuth, wrap(async (_req, res) => {
   const [categories, products, zones] = await Promise.all([
     db.from('categories').select('*').order('sort'),
     db.from('products').select('id, category_id, name, description, price_pi, promo_price_pi, images, stock, is_new, variants, is_demo').eq('active', true).order('created_at', { ascending: false }),

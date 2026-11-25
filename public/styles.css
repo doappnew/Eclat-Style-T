@@ -182,3 +182,10 @@ section[id^=cat-] .sec h2{font-size:1.9rem}
 .tile span{font-size:1.05rem}
 .card h3{min-height:0;font-size:.88rem} .card .body{padding:10px 12px 4px}
 .foot nav{gap:6px 14px} .foot img{height:44px}
+
+/* Connexion obligatoire : écran d'accueil seul */
+.welcome{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:24px}
+.welcome .wlogo{width:84px;height:84px}
+.welcome h1 em{color:var(--gold,#c9a24a);font-style:normal}
+.welcome p{max-width:30ch;margin:0}
+body.gated .tabbar,body.gated .icon-btn,body.gated #hd-login{display:none!important}

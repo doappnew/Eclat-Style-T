@@ -223,6 +223,14 @@ async function adminView(_m, q) {
   return mod.render(q);
 }
 
+function welcome() {
+  return `<section class="welcome"><img class="wlogo" src="/logo-mark.png" alt="" onerror="this.remove()"><h1>Éclat <em>&amp;</em> Style</h1>
+    <p>Beauté, bijoux et mode, payés en Pi. Connectez-vous pour entrer dans la boutique.</p>
+    <button class="btn gold" data-act="login" type="button">Se connecter avec Pi</button>
+    <p id="pay-msg" class="err"></p>${hasPi() ? '' : '<p class="muted">La connexion Pi fonctionne uniquement dans le Pi Browser.</p>'}</section>`;
+}
+async function loadCatalog() { S.cat = await api('/api/catalog'); }
+
 // ---------- Routeur ----------
 const routes = [[/^\/$/, home], [/^\/catalog$/, catalog], [/^\/product\/(.+)$/, product], [/^\/cart$/, cart], [/^\/checkout$/, checkout],
   [/^\/orders$/, orders], [/^\/order\/(.+)$/, orderView], [/^\/favorites$/, favorites], [/^\/account$/, account], [/^\/page\/(.+)$/, page], [/^\/admin$/, adminView]];
@@ -232,9 +240,13 @@ async function render() {
   const [path, qs] = (location.hash.slice(1) || '/').split('?');
   const q = new URLSearchParams(qs || '');
   const hit = routes.find(([re]) => re.test(path));
+  const nt = document.getElementById('notice'); if (nt) { nt.hidden = true; nt.textContent = ''; }
+  const gated = !S.user && !/^\/page\//.test(path);
+  document.body.classList.toggle('gated', gated);
+  if (gated) { view.innerHTML = welcome(); window.scrollTo(0, 0); return; }
   view.innerHTML = '<div class="spin">Chargement…</div>';
   let html;
-  try { html = hit ? await hit[1](path.match(hit[0]).slice(1), q) : '<p>Page introuvable.</p>'; } catch (e) { html = `<p class="err">${esc(e.message)}</p>`; }
+  try { if (S.user && !S.cat) await loadCatalog(); html = hit ? await hit[1](path.match(hit[0]).slice(1), q) : '<p>Page introuvable.</p>'; } catch (e) { html = `<p class="err">${esc(e.message)}</p>`; }
   if (t !== token) return;
   view.innerHTML = html;
   window.scrollTo(0, 0);
@@ -247,7 +259,7 @@ async function render() {
 }
 
 // ---------- Actions ----------
-const APP_VERSION = 'v16';
+const APP_VERSION = 'v17';
 const msg = (t) => {
   const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
   if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }
@@ -284,10 +296,11 @@ Object.assign(acts, {
     const n = document.getElementById('notice'); n.hidden = true;
     try {
       await Promise.race([login(), new Promise((_, rej) => setTimeout(() => rej(new Error('Pi ne répond pas. Vérifiez que l\'application est ouverte dans le Pi Browser, enregistrée et validée dans le Portail développeur, puis réessayez.')), 30000))]);
-      await refreshFavs(); toast(`Connexion réussie. Bienvenue ${S.user.username}`); render();
+      await refreshFavs(); toast(`Connexion réussie. Bienvenue ${S.user.username}`);
+      if (location.hash && location.hash !== '#/') { go('#/'); } else render();
     } catch (e) { msg(e?.message || 'Connexion impossible. Réessayez.'); if (el) { el.disabled = false; el.textContent = label; } }
   },
-  logout: () => { logout(); render(); },
+  logout: () => { logout(); S.cat = null; if (location.hash !== '#/') go('#/'); else render(); },
   thumb: (el) => { document.getElementById('main-img').src = el.src; document.querySelectorAll('.thumbs img').forEach((i) => i.classList.toggle('on', i === el)); },
   pqty: (el) => { const p = prod(location.hash.split('/')[2]); pq = Math.max(1, Math.min(p?.stock || 1, pq + Number(el.dataset.d))); document.getElementById('pq').textContent = pq; },
   add: (el) => { if (addToCart(el.dataset.id)) toast('Ajouté au panier'); },
@@ -368,11 +381,10 @@ if (splash) { setTimeout(() => { splash.classList.add('hide'); setTimeout(() => 
   const wake = setTimeout(() => { view.innerHTML = '<div class="spin">La boutique se réveille, quelques secondes…</div>'; }, 4000);
   const retry = async (fn) => { for (let i = 0; ; i++) { try { return await fn(); } catch (e) { if (i >= 3) throw e; await new Promise((r) => setTimeout(r, 4000)); } } };
   try {
-    const [cfg, cat] = await retry(() => Promise.all([api('/api/config'), api('/api/catalog')]));
+    const cfg = await retry(() => api('/api/config'));
     clearTimeout(wake);
-    S.config = cfg; S.cat = cat;
+    S.config = cfg;
     if (S.user) { try { const me = await api('/api/me'); S.user = me; store.set('session', { token: S.token, user: me }); await refreshFavs(); } catch { /* session expirée */ } }
   } catch (e) { clearTimeout(wake); view.innerHTML = `<p class="err">${esc(e.message)}</p>`; return; }
-  if (!hasPi()) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = 'Pour vous connecter et payer en Pi, ouvrez cette boutique dans le Pi Browser. Vous pouvez parcourir le catalogue ici.'; }
   render();
 })();
