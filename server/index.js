@@ -41,14 +41,18 @@ async function markPioneer(userId, patch) {
     const row = (await db.from('pioneer_test').select('*').eq('user_id', userId).maybeSingle()).data;
     const flags = mergeFlags(row, patch);
     if (row && flags.login_ok === row.login_ok && flags.u2a_done === row.u2a_done && flags.a2u_done === row.a2u_done) return;
-    await db.from('pioneer_test').upsert({ user_id: userId, ...flags, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    const up = await db.from('pioneer_test').upsert({ user_id: userId, ...flags, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (up.error) console.error(`pioneer: suivi impossible ${String(up.error.message).slice(0, 120)}`);
   } catch (e) { console.error(`pioneer: suivi impossible ${String(e?.message || e).slice(0, 120)}`); }
 }
 const pioneerRow = async (userId) => (await db.from('pioneer_test').select('*').eq('user_id', userId).maybeSingle()).data || null;
-async function validatedCount() {
-  const { count } = await db.from('pioneer_test').select('user_id', { count: 'exact', head: true }).eq('login_ok', true).eq('u2a_done', true).eq('a2u_done', true);
-  return count || 0;
+// Source de vérité du nombre de pionniers validés : les envois de test terminés (table testnet_payouts).
+async function completedPayouts() {
+  const { data, error } = await db.from('testnet_payouts').select('user_id, created_at, users(username)').eq('status', 'completed').order('created_at', { ascending: false });
+  if (error) { console.error(`pioneer: lecture des envois impossible ${String(error.message).slice(0, 120)}`); return []; }
+  return data || [];
 }
+async function validatedCount() { return (await completedPayouts()).length; }
 
 const app = express();
 app.set('trust proxy', 1);
@@ -290,7 +294,10 @@ app.post('/api/payments/cancelled', requireAuth, wrap(async (req, res) => {
 
 app.get('/api/pioneer/me', requireAuth, wrap(async (req, res) => {
   const row = await pioneerRow(req.user.id);
-  res.json({ login_ok: !!row?.login_ok, u2a_done: !!row?.u2a_done, a2u_done: !!row?.a2u_done, validated: isValidated(row), count: await validatedCount(), cap: PIONEER_CAP });
+  const done = await completedPayouts();
+  const a2u = !!row?.a2u_done || done.some((d) => d.user_id === req.user.id);
+  const me = { login_ok: true, u2a_done: !!row?.u2a_done, a2u_done: a2u };
+  res.json({ ...me, validated: isValidated(me), count: done.length, cap: PIONEER_CAP });
 }));
 
 // ---------- Envoi de test (Testnet) : de l'application vers l'utilisateur (A2U) ----------
@@ -333,8 +340,11 @@ const admin = express.Router();
 admin.use(requireAuth, requireAdmin);
 
 admin.get('/pioneers', wrap(async (_req, res) => {
-  const rows = must(await db.from('pioneer_test').select('user_id, login_ok, u2a_done, a2u_done, created_at, updated_at, users(username)').order('updated_at', { ascending: false }).limit(200));
-  const list = rows.map((r) => ({ username: r.users?.username || '—', step: stepOf(r), validated: isValidated(r), login_ok: r.login_ok, u2a_done: r.u2a_done, a2u_done: r.a2u_done, updated_at: r.updated_at }));
+  const rows = (await db.from('pioneer_test').select('user_id, login_ok, u2a_done, a2u_done, created_at, updated_at, users(username)').order('updated_at', { ascending: false }).limit(200)).data || [];
+  const done = await completedPayouts();
+  const byUser = new Map(rows.map((r) => [r.user_id, { username: r.users?.username || '—', login_ok: true, u2a_done: !!r.u2a_done, a2u_done: !!r.a2u_done, updated_at: r.updated_at }]));
+  for (const d of done) { const x = byUser.get(d.user_id) || { username: d.users?.username || '—', login_ok: true, u2a_done: false, updated_at: d.created_at }; x.a2u_done = true; byUser.set(d.user_id, x); }
+  const list = [...byUser.values()].map((x) => ({ ...x, step: stepOf(x), validated: isValidated(x) }));
   res.json({ cap: PIONEER_CAP, count: list.filter((x) => x.validated).length, list });
 }));
 admin.get('/orders', wrap(async (_req, res) => {
