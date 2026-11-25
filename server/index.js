@@ -300,7 +300,8 @@ app.post('/api/testnet-payout', strict, requireAuth, wrap(async (req, res) => {
   must(await db.from('testnet_payouts').upsert({ user_id: uid, amount: PAYOUT_AMOUNT, status: 'pending', payment_id: null, txid: null }, { onConflict: 'user_id' }));
   let paymentId = null;
   try {
-    const { default: PiNetwork } = await import('pi-backend');
+    const mod = await import('pi-backend');
+    const PiNetwork = typeof mod.default === 'function' ? mod.default : mod.default?.default;
     const sdk = new PiNetwork(env.PI_API_KEY, env.PI_WALLET_SEED);
     paymentId = await sdk.createPayment({ amount: PAYOUT_AMOUNT, memo: 'Envoi de test', metadata: { kind: 'testnet-payout', userId: uid }, uid: req.user.pi_uid });
     await db.from('testnet_payouts').update({ payment_id: paymentId }).eq('user_id', uid);
