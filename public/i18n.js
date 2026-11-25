@@ -67,6 +67,9 @@ const D = {
   'Choisissez une zone de livraison.': 'Choose a delivery zone.', 'Votre panier est vide.': 'Your cart is empty.', 'Veuillez remplir tous les champs obligatoires.': 'Please fill in all required fields.',
   'Quantité invalide.': 'Invalid quantity.',
   // zones
+  'Continent': 'Continent', 'Pays': 'Country', 'Ville': 'City', 'Amérique': 'Americas', 'Afrique': 'Africa', 'Europe': 'Europe',
+  'Aucune zone disponible pour ce continent.': 'No delivery zone available for this continent.', "Autres pays d'Amérique": 'Other countries in the Americas',
+  'Portugal': 'Portugal', 'Pays-Bas': 'Netherlands', 'Irlande': 'Ireland', 'Autriche': 'Austria', 'Suède': 'Sweden', 'Norvège': 'Norway', 'Danemark': 'Denmark', 'Finlande': 'Finland', 'Pologne': 'Poland', 'Grèce': 'Greece', 'Mexique': 'Mexico', 'Brésil': 'Brazil', 'Haïti': 'Haiti',
   'Bénin': 'Benin', "Côte d'Ivoire": 'Ivory Coast', 'Sénégal': 'Senegal', 'Cameroun': 'Cameroon', 'RD Congo': 'DR Congo', 'Maroc': 'Morocco',
   "Autres pays d'Afrique": 'Other African countries', 'États-Unis': 'United States', 'France': 'France', 'Belgique': 'Belgium', 'Royaume-Uni': 'United Kingdom',
   'Allemagne': 'Germany', 'Espagne': 'Spain', 'Italie': 'Italy', 'Suisse': 'Switzerland', "Autres pays d'Europe": 'Other European countries',

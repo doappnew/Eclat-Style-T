@@ -124,20 +124,44 @@ function cart() {
     <a class="btn gold block" href="#/checkout">Commander</a>`;
 }
 
-let selZone = null;
+let selZone = null; let selCont = null; let selCountry = null;
+const CONTINENTS = ['Europe', 'Amérique', 'Afrique'];
+const EU = ['France', 'Belgique', 'Royaume-Uni', 'Allemagne', 'Espagne', 'Italie', 'Suisse', 'Portugal', 'Pays-Bas', 'Luxembourg', 'Irlande', 'Autriche', 'Suède', 'Norvège', 'Danemark', 'Finlande', 'Pologne', 'Grèce', "Autres pays d'Europe"];
+const AM = ['États-Unis', 'Canada', 'Mexique', 'Brésil', 'Haïti', 'Guadeloupe', 'Martinique', "Autres pays d'Amérique"];
+const continentOf = (country) => (EU.includes(country) ? 'Europe' : AM.includes(country) ? 'Amérique' : 'Afrique');
+function resolveZone(zones) {
+  let z = zones.find((x) => x.id === selZone);
+  if (z && (continentOf(z.country) !== (selCont || continentOf(z.country)) || z.country !== (selCountry || z.country))) z = null;
+  if (!z) {
+    selCont = selCont || continentOf((zones[0] || {}).country);
+    const inCont = zones.filter((x) => continentOf(x.country) === selCont);
+    selCountry = inCont.some((x) => x.country === selCountry) ? selCountry : inCont[0]?.country || null;
+    z = inCont.find((x) => x.country === selCountry);
+  }
+  selCont = selCont || (z ? continentOf(z.country) : CONTINENTS[0]); selCountry = z?.country || selCountry; selZone = z?.id || null;
+  return z;
+}
+function zonePicker(zones) {
+  const inCont = zones.filter((x) => continentOf(x.country) === selCont);
+  const rank = (c) => (c === 'Bénin' ? 0 : /^Autres/.test(c) ? 2 : 1);
+  const countries = [...new Set(inCont.map((x) => x.country))].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b, 'fr'));
+  const cities = inCont.filter((x) => x.country === selCountry);
+  return `<label>Continent</label><select data-change="cont">${CONTINENTS.map((c) => `<option value="${c}" ${c === selCont ? 'selected' : ''}>${c}</option>`).join('')}</select>
+    <label>Pays</label><select data-change="country">${countries.map((c) => `<option value="${esc(c)}" ${c === selCountry ? 'selected' : ''}>${esc(c)}</option>`).join('') || '<option value="">—</option>'}</select>
+    <label>Ville</label><select name="zoneId" data-change="zone">${cities.map((x) => `<option value="${x.id}" ${x.id === selZone ? 'selected' : ''}>${esc(x.city)} (${fmt(x.fee_pi)})</option>`).join('') || '<option value="">—</option>'}</select>
+    ${countries.length ? '' : '<div class="muted">Aucune zone disponible pour ce continent.</div>'}`;
+}
 function checkout() {
   const lines = cartLines();
   if (!lines.length) return '<h1>Commande</h1><p>Votre panier est vide.</p>';
   const zones = S.cat.zones;
-  const z = zones.find((x) => x.id === selZone) || zones[0];
-  selZone = z?.id;
+  const z = resolveZone(zones);
   const fee = z ? Number(z.fee_pi) : 0;
   return `<h1>Commande</h1>
     <form data-form="checkout" class="panel"><h3>Informations de livraison</h3>
       <label>Nom et prénom</label><input name="full_name" required maxlength="120" autocomplete="name">
       <label>Téléphone</label><input name="phone" type="tel" required maxlength="30" autocomplete="tel">
-      <label>Zone de livraison (pays — ville)</label>
-      <select name="zoneId" data-change="zone">${zoneOptions(zones)}</select>
+      ${zonePicker(zones)}
       ${z?.eta ? `<div class="muted">Délai indicatif : ${esc(z.eta)}</div>` : ''}
       <label>Commune</label><input name="commune" required maxlength="120">
       <label>Quartier</label><input name="quartier" required maxlength="120">
@@ -227,13 +251,6 @@ async function adminView(_m, q) {
   return mod.render(q);
 }
 
-function zoneOptions(zones) {
-  const by = {}; for (const x of zones) (by[x.country] ||= []).push(x);
-  const rank = (c) => (c === 'Bénin' ? 0 : /^Autres/.test(c) ? 2 : 1);
-  return Object.keys(by).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b, 'fr')).map((c) =>
-    `<optgroup label="${esc(c)}">${by[c].map((x) => `<option value="${x.id}" ${x.id === selZone ? 'selected' : ''}>${esc(x.city)} (${fmt(x.fee_pi)})</option>`).join('')}</optgroup>`).join('');
-}
-
 function welcome() {
   return `<section class="welcome"><img class="wlogo" src="/logo-mark.png" alt="" onerror="this.remove()"><h1>Éclat <em>&amp;</em> Style</h1>
     <p>Beauté, bijoux et mode, payés en Pi. Connectez-vous pour entrer dans la boutique.</p>
@@ -270,7 +287,7 @@ async function render() {
 }
 
 // ---------- Actions ----------
-const APP_VERSION = 'v21';
+const APP_VERSION = 'v22';
 const msg = (t) => {
   const m = document.getElementById('pay-msg'); if (m) m.textContent = t || '';
   if (t) { const n = document.getElementById('notice'); n.hidden = false; n.textContent = t; n.scrollIntoView({ block: 'nearest' }); toast(t); }
@@ -347,6 +364,9 @@ forms.checkout = async (f) => {
     S.cart = []; saveCart(); go(`#/order/${order.id}?ok=1`);
   } catch (e) { msg(e.message); btn.disabled = false; }
 };
+const keepForm = () => { const f0 = document.querySelector('[data-form=checkout]'); const data = f0 ? Object.fromEntries(new FormData(f0)) : {}; render().then(() => { const f = document.querySelector('[data-form=checkout]'); if (f) for (const [k, v] of Object.entries(data)) if (f.elements[k] && k !== 'zoneId') f.elements[k].value = v; }); };
+changes.cont = (el) => { selCont = el.value; selCountry = null; selZone = null; keepForm(); };
+changes.country = (el) => { selCountry = el.value; selZone = null; keepForm(); };
 changes.zone = (el) => { selZone = el.value; const data = Object.fromEntries(new FormData(el.form)); render().then(() => { const f = document.querySelector('[data-form=checkout]'); if (f) for (const [k, v] of Object.entries(data)) if (f.elements[k] && k !== 'zoneId') f.elements[k].value = v; }); };
 changes.filter = (el) => {
   const q = new URLSearchParams(location.hash.split('?')[1] || '');
