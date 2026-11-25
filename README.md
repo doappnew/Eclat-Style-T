@@ -45,3 +45,6 @@ Tests : `npm test`.
 - Ouvrir l'application dans le Pi Browser uniquement ; dans Chrome, le SDK Pi n'existe pas.
 - En cas de nouvel échec, regarder les journaux Render filtrés sur `auth:` (code de réponse de l'API Pi, sans aucun secret).
 - Pour tester la CSP complète : mettre `STRICT_HEADERS=1`, tester la connexion ; si elle échoue, remettre la valeur vide.
+
+## Réseau (PI_NETWORK)
+`PI_NETWORK=testnet` (défaut) ou `mainnet`. Le même code sert les deux. En mainnet : le serveur refuse de démarrer sans `PI_API_KEY` et `PI_VALIDATION_KEY`, la route d'envoi de test est fermée (404) même avec `TESTNET_PAYOUT=1`, la section « Test Testnet » disparaît, et chaque paiement est refusé si `payment.network` ne correspond pas au réseau configuré (« Pi Network » pour le Mainnet, « Pi Testnet » pour le Testnet).

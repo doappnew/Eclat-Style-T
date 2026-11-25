@@ -11,11 +11,16 @@ import { seedZones } from './lib/zones.js';
 import { piMe, makePiPayments, PiError } from './lib/pi.js';
 import { computeTotals, unitPrice } from './lib/pricing.js';
 import { checkPaymentMatchesOrder } from './lib/payments.js';
+import { networkOf, startupProblems, payoutOpen } from './lib/network.js';
 import { orderSchema, productSchema, zoneSchema, orderPatchSchema } from './lib/validate.js';
 
 const env = process.env;
 if (!env.SESSION_SECRET || env.SESSION_SECRET.length < 32) throw new Error('SESSION_SECRET (32+ caractères) manquant');
 if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) throw new Error('SUPABASE_URL / SUPABASE_SERVICE_KEY manquants');
+
+const NETWORK = networkOf(env);
+const problems = startupProblems(env);
+if (problems.length) throw new Error(`PI_NETWORK=mainnet refusé : ${problems.join(', ')}`);
 
 const db = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY, { auth: { persistSession: false } });
 const pi = makePiPayments(env.PI_API_KEY || '');
@@ -31,6 +36,7 @@ const log = (event, detail = {}) => db.from('events').insert({ event, detail }).
 
 // ---------- Suivi du test Testnet des pionniers (n'interrompt jamais la connexion ni le paiement) ----------
 async function markPioneer(userId, patch) {
+  if (NETWORK !== 'testnet') return;
   try {
     const row = (await db.from('pioneer_test').select('*').eq('user_id', userId).maybeSingle()).data;
     const flags = mergeFlags(row, patch);
@@ -140,7 +146,8 @@ app.get('/api/me', requireAuth, (req, res) => res.json({ username: req.user.user
 app.get('/api/config', (_req, res) => res.json({
   shopName: env.SHOP_NAME || 'Éclat & Style', contactEmail: env.CONTACT_EMAIL || '', contactPhone: env.CONTACT_PHONE || '',
   maxPayment: Number(env.PI_MAX_PAYMENT) || 0,
-  testnetPayout: env.TESTNET_PAYOUT === '1' && !!env.PI_WALLET_SEED,
+  testnetPayout: payoutOpen(env),
+  network: NETWORK,
 }));
 
 app.get('/api/catalog', requireAuth, wrap(async (_req, res) => {
@@ -222,7 +229,7 @@ app.post('/api/payments/approve', requireAuth, strict, wrap(async (req, res) => 
   const paymentId = String(req.body?.paymentId || '');
   const payment = await getPayment(paymentId);
   const order = await orderOf(payment.metadata?.orderId);
-  const chk = checkPaymentMatchesOrder(payment, order, req.user);
+  const chk = checkPaymentMatchesOrder(payment, order, req.user, NETWORK);
   if (!chk.ok) { await log('approve_refused', { paymentId, reason: chk.reason }); throw new HttpError(400, `Paiement refusé (${chk.reason})`); }
   if (order.status !== 'awaiting_payment') throw new HttpError(409, 'Commande déjà traitée');
 
@@ -240,7 +247,7 @@ app.post('/api/payments/approve', requireAuth, strict, wrap(async (req, res) => 
 
 async function completeFlow(payment, user, clientTxid) {
   const order = await orderOf(payment.metadata?.orderId);
-  const chk = checkPaymentMatchesOrder(payment, order, user);
+  const chk = checkPaymentMatchesOrder(payment, order, user, NETWORK);
   if (!chk.ok) throw new HttpError(400, `Paiement refusé (${chk.reason})`);
   if (order.payment_id !== payment.identifier) throw new HttpError(409, 'Paiement non associé à la commande');
   const txid = payment.transaction?.txid || clientTxid;
@@ -291,7 +298,7 @@ app.get('/api/pioneer/me', requireAuth, wrap(async (req, res) => {
 // Montant fixé par le serveur, un seul envoi par compte, plafond de comptes, réseau « Pi Testnet » vérifié.
 const PAYOUT_AMOUNT = Math.min(Number(env.TESTNET_PAYOUT_AMOUNT) || 0.1, 1);
 app.post('/api/testnet-payout', strict, requireAuth, wrap(async (req, res) => {
-  if (env.TESTNET_PAYOUT !== '1' || !env.PI_WALLET_SEED || !env.PI_API_KEY) throw new HttpError(404, 'Indisponible');
+  if (!payoutOpen(env)) throw new HttpError(404, 'Indisponible');
   const uid = req.user.id;
   const existing = (await db.from('testnet_payouts').select('status').eq('user_id', uid).maybeSingle()).data;
   if (existing && existing.status !== 'failed') throw new HttpError(409, 'Un envoi de test a déjà été effectué pour ce compte.');

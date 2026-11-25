@@ -221,6 +221,7 @@ async function account() {
   if (!S.user) return needLogin('Connectez-vous avec votre compte Pi pour commander et suivre vos achats.');
   let test = '';
   const on = !!S.config.testnetPayout;
+  if (S.config.network === 'mainnet') return `<h1>Mon compte</h1><div class="panel"><b>${esc(S.user.username)}</b></div>${accountLinks()}`;
   let p = { count: 0, cap: 5, login_ok: true, u2a_done: false, a2u_done: false, validated: false };
   try { p = await api('/api/pioneer/me'); } catch { /* le suivi ne bloque jamais le compte */ }
   const ok = (v) => (v ? '<b class="okc">✔</b>' : '<b class="err">✖</b>');
@@ -232,11 +233,11 @@ async function account() {
     ${p.validated ? '<p class="okc" style="margin:10px 0 0">Compte validé, merci !</p>' : ''}
     <br><button class="btn ghost block" data-act="payout" type="button" ${on ? '' : 'disabled style="opacity:.5"'}>Recevoir mon envoi de test (Testnet)</button>
     ${on ? '' : '<p class="muted" style="margin:8px 0 0">Test pas encore activé par l\'administrateur.</p>'}</div>`;
-  return `<h1>Mon compte</h1><div class="panel"><b>${esc(S.user.username)}</b></div>${test}
-    <a class="btn gold block" href="#/orders" style="margin-bottom:12px">Mes commandes</a>
+  return `<h1>Mon compte</h1><div class="panel"><b>${esc(S.user.username)}</b></div>${test}${accountLinks()}`;
+}
+const accountLinks = () => `<a class="btn gold block" href="#/orders" style="margin-bottom:12px">Mes commandes</a>
     <div class="panel"><a href="#/favorites">Mes favoris</a>${S.user.role === 'admin' ? '<br><br><a href="#/admin">Administration</a>' : ''}</div>
     <button class="btn ghost block" data-act="logout">Se déconnecter</button>`;
-}
 
 const page = ([name]) => {
   const p = (LANG === 'en' && PAGES_EN[name]) || PAGES[name];
